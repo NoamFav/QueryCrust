@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, Timestamp
+from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import relationship, declarative_base
+from datetime import datetime
 
 Base = declarative_base()
 
@@ -9,7 +10,7 @@ class CustomerPersonalInformation(Base):
 
     id = Column(Integer, primary_key=True)
     address = Column(Integer)
-    birthday = Column(Timestamp)
+    birthday = Column(DateTime)
     phone_number = Column(Integer)
     gender = Column(String(18))
     previous_orders = Column(Integer)
