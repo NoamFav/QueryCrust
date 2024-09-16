@@ -1,5 +1,4 @@
 *.log
-*.sql
 config/*
 !config/*.example
 
