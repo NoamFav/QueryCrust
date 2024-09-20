@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer,ForeignKey
 from sqlalchemy.orm import relationship, declarative_base
 
-Base = declarative_base()
+from base import Base
 
 
 class SubOrder(Base):

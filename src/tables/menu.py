@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Float, event
 from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy import select, func
 
-Base = declarative_base()
+from base import Base
 
 
 class Menu(Base):
