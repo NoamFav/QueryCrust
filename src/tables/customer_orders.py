@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
 from sqlalchemy.orm import relationship, declarative_base
 from datetime import datetime
+from base import Base
 
-Base = declarative_base()
 
 
 class CustomerOrders(Base):

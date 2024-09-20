@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import relationship, declarative_base
 from datetime import datetime
-Base = declarative_base()
+from base import Base
 
 class DeliveryDriver(Base):
     __tablename__ = 'delivery_driver'

@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, select, func, event
 from sqlalchemy.orm import relationship, declarative_base
 from datetime import datetime
 
-Base = declarative_base()
+from base import Base
 
 
 class CustomerPersonalInformation(Base):

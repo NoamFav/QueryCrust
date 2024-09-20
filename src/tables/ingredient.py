@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float, Boolean
 from sqlalchemy.orm import relationship, declarative_base
 
-Base = declarative_base()
+from base import Base
 
 
 class Ingredient(Base):

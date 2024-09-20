@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, ForeignKey, Boolean
 from sqlalchemy.orm import relationship, declarative_base
 
-Base = declarative_base()
+from base import Base
 
 # Association table for many-to-many relationship between Menu and Ingredient
 class PizzaIngredient(Base):

@@ -8,6 +8,7 @@ from src.tables.pizza_ingredient_junction import PizzaIngredient
 from src.tables.sub_order import SubOrder
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
+from src.tables.base import Base
 
 
 class OrderContainer:
