@@ -9,9 +9,10 @@ class PizzaIngredient(Base):
 
     menu_id = Column(Integer, ForeignKey('menu.id'), primary_key=True)
     ingredient_id = Column(Integer, ForeignKey('ingredient.id'), primary_key=True)
-    is_vegetarian = Column(Boolean)
-    is_vegan = Column(Boolean)
+
 
     # Relationships
     menu = relationship("Menu", back_populates="ingredients")
     ingredient = relationship("Ingredient", back_populates="menus")
+
+

@@ -16,6 +16,6 @@ class CustomerOrders(Base):
     status = Column(String(10))
     password = Column(String(30))
 
-    customer = relationship('CustomerPersonalInformation', back_populates='orders')
-    sub_orders = relationship('SubOrder', back_populates='order')
-    delivery = relationship('Delivery', back_populates='order')
+#    customer = relationship('CustomerPersonalInformation', back_populates='orders')
+#    sub_orders = relationship('SubOrder', back_populates='order')
+#    delivery = relationship('Delivery', back_populates='order')
