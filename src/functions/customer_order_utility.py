@@ -4,6 +4,7 @@ from src.tables.database import *
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 
+
 class OrderContainer:
     def __init__(self, session: Session, customer_id: int):
         """
@@ -13,7 +14,7 @@ class OrderContainer:
         :param customer_id: ID of the customer placing the order.
         """
         self.session = session
-        self.sub_orders = []
+        self.sub_orders = []  # so that we can keep track of all the parts of our customers order for the finall "1 pizza test"
         self.order = CustomerOrders(
             customer_id=customer_id,
             total_cost=0,  # Initialize with 0, we will update later
@@ -41,12 +42,14 @@ class OrderContainer:
         )
         self.session.add(sub_order)
         self.sub_orders.append(sub_order)  # Keep track of sub-orders in the container
-
-        # add ingredients if present
-        if ingredient_ids:
-            for ingredient_id in ingredient_ids:
-                ordered_pizza_ingredient = OrderedIngredient(
-                    sub_order_id=sub_order.id,
+        self.session.flush()  # this forces the database to assign it a primary key
+        #                                                                        \/
+        #                                                                        \/
+        # add ingredients if present                                             \/
+        if ingredient_ids:  #                                                    \/
+            for ingredient_id in ingredient_ids:  #                              \/
+                ordered_pizza_ingredient = OrderedIngredient(  #                 \/
+                    sub_order_id=sub_order.id,  # which we need here----------<<<<<
                     ingredient_id=ingredient_id
                 )
                 self.session.add(ordered_pizza_ingredient)
@@ -85,9 +88,7 @@ class OrderContainer:
             raise ValueError("Order has not been created yet.")
 
         # adding a 25 minute delivery time arbitrarily
-        self.order.delivery_eta = datetime.now() + timedelta(minutes = 25)
+        self.order.delivery_eta = datetime.now() + timedelta(minutes=25)
         # Commit the session to save all the changes (customer order, sub-orders, ingredients)
         self.session.commit()
         print(f"Order {self.order.id} finalized with total cost: ${self.order.total_cost:.2f}")
-
-
