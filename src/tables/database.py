@@ -18,7 +18,7 @@ class CustomerPersonalInformation(Base):
 
 
 @event.listens_for(CustomerPersonalInformation, 'before_insert')
-def auto_increment_menu_id(connection, target):
+def auto_increment_menu_id(mapper, connection, target):
     # Use SQLAlchemy's select() to query for the max id in the Menu table
     stmt = select(func.max(CustomerPersonalInformation.id))
 
@@ -80,7 +80,7 @@ class SubOrder(Base):
 
     # links to be able to go from sub-order to order and vice versa
     order = relationship('CustomerOrders', back_populates='sub_orders')
-    menu_item = relationship('Menu')
+    menu_item = relationship('Menu', back_populates="sub_orders")
     ingredients = relationship("OrderedIngredient", back_populates="customer_orders")
 
 
@@ -92,11 +92,11 @@ class Menu(Base):
     price = Column(Float)
     category = Column(String(10))
 
-    sub_orders = relationship('SubOrder')
+    sub_orders = relationship('SubOrder', back_populates='menu_item')
 
 
 @event.listens_for(Menu, 'before_insert')
-def set_menu_id(connection, target):
+def set_menu_id(mapper, connection, target):
     # Define category codes
     category_codes = {'pizza': 1, 'drink': 2, 'dessert': 3}
     category_code = category_codes.get(target.category.lower())
@@ -123,8 +123,9 @@ def set_menu_id(connection, target):
 class OrderedIngredient(Base):
     __tablename__ = 'ordered_pizza_ingredients'
 
-    sub_order_id = Column(Integer, ForeignKey('sub_order.id'), primary_key=True)
-    ingredient_id = Column(Integer, ForeignKey('ingredient.id'), primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    sub_order_id = Column(Integer, ForeignKey('sub_order.id'))
+    ingredient_id = Column(Integer, ForeignKey('ingredient.id'))
 
 
     # Relationships
@@ -135,12 +136,13 @@ class OrderedIngredient(Base):
 class PizzaIngredient(Base):
     __tablename__ = 'pizza_ingredient'
 
-    menu_id = Column(Integer, ForeignKey('menu.id'), primary_key=True)
-    ingredient_id = Column(Integer, ForeignKey('ingredient.id'), primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    menu_id = Column(Integer, ForeignKey('menu.id'))
+    ingredient_id = Column(Integer, ForeignKey('ingredient.id'))
 
 
     # Relationships
-    menu = relationship("Menu", back_populates="ingredients")
+    menu = relationship("Menu")
     ingredient = relationship("Ingredient", back_populates="menus")
 
 

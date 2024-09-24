@@ -3,23 +3,15 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import cast, String
 
-from src.tables import pizza_ingredient_junction
-from src.tables.customer_orders import CustomerOrders
-from src.tables.menu import Menu
-from src.tables.sub_order import SubOrder
+from src.tables.database import *
 
 
 # gets drink/dessert, or returns all ingredients associated with the pizza
-def get_menu_item_by_starting_id(session: Session, id: int):
-
+def get_menu_items_by_starting_id(session: Session, id: int):
+    # Query all menu items whose id starts with the given value (id)
     menu_items = session.query(Menu).filter(cast(Menu.id, String).like(f'{id}%')).all()
-    # Query the PizzaIngredient table to find all related ingredients for the menu_ids
-    if id == 1:
-        items = session.query(pizza_ingredient_junction).filter(pizza_ingredient_junction.menu_id.in_(menu_items)).all()
-    else:
-        items = session.query(Menu).filter(cast(Menu.id, String).like('1%')).all()
 
-    return items
+    return menu_items
 
 
 def get_non_completed_orders(session: Session):
