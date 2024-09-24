@@ -1,15 +1,8 @@
 from sqlalchemy import engine
 
-from src.tables.customer_orders import CustomerOrders
-from src.tables.ingredient import Ingredient
-from src.tables.menu import Menu
-from src.tables.ordered_pizza_ingredients import OrderedIngredient
-from src.tables.pizza_ingredient_junction import PizzaIngredient
-from src.tables.sub_order import SubOrder
+from src.tables.database import *
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-from src.tables.base import Base
-
 
 class OrderContainer:
     def __init__(self, session: Session, customer_id: int):
@@ -20,6 +13,7 @@ class OrderContainer:
         :param customer_id: ID of the customer placing the order.
         """
         self.session = session
+        self.sub_orders = []
         self.order = CustomerOrders(
             customer_id=customer_id,
             total_cost=0,  # Initialize with 0, we will update later
@@ -52,7 +46,7 @@ class OrderContainer:
         if ingredient_ids:
             for ingredient_id in ingredient_ids:
                 ordered_pizza_ingredient = OrderedIngredient(
-                    order_id=self.order.id,
+                    sub_order_id=sub_order.id,
                     ingredient_id=ingredient_id
                 )
                 self.session.add(ordered_pizza_ingredient)
