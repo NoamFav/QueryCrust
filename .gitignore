@@ -2,3 +2,5 @@
 config/*
 !config/*.example
 
+
+.DS_Store
