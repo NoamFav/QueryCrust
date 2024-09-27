@@ -97,6 +97,29 @@ class Menu(Base):
 
     sub_orders = relationship('SubOrder', back_populates='menu_item')
 
+    def calculate_total_price(self, session):
+        # Get all ingredients for this menu item
+        ingredients = session.query(Ingredient).join(PizzaIngredient).filter(PizzaIngredient.menu_id == self.id).all()
+
+        # Calculate the total base cost including the menu item's price
+        total_base_cost = float(self.price) + sum(float(ingredient.price) for ingredient in ingredients)
+    
+        # Apply a 40% profit margin
+        price_with_profit = total_base_cost * 1.4
+
+        # Add 9% VAT
+        final_price = price_with_profit * 1.09
+
+        return round(float(final_price), 2)  # Ensuring the final_price is cast to float before rounding
+    
+    def is_vegetarian(self, session):
+        ingredients = session.query(Ingredient).join(PizzaIngredient).filter(PizzaIngredient.menu_id == self.id).all()
+        return all(ingredient.is_vegetarian for ingredient in ingredients)
+
+    def is_vegan(self, session):
+        ingredients = session.query(Ingredient).join(PizzaIngredient).filter(PizzaIngredient.menu_id == self.id).all()
+        return all(ingredient.is_vegan for ingredient in ingredients)
+
 
 @event.listens_for(Menu, 'before_insert')
 def set_menu_id(mapper, connection, target):

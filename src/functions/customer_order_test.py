@@ -4,14 +4,6 @@ from src.tables.database import *
 from customer_order_utility import *
 from gui_integration import *
 
-## warning: this is all bullshit spun up by chatgpt to give this code a little runaround
-
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from gui_integration import get_menu_items_by_starting_id, get_non_completed_orders, create_customer_order
-
-
-
 # Set up the in-memory database
 def setup_database():
     engine = create_engine('sqlite:///:memory:')
@@ -24,17 +16,24 @@ def setup_database():
 # Add some test menu items and ingredients
 def add_menu_items_and_ingredients(session):
     print("Adding menu items and ingredients to the database...")
+
+    # Create menu items
     pizza_item = Menu(name='Margherita', price=10.0, category='pizza')
     drink_item = Menu(name='Coke', price=2.0, category='drink')
 
-    # Add some ingredients for pizzas
-    cheese = Ingredient(name="Cheese")
-    tomato = Ingredient(name="Tomato")
+    # Create ingredients
+    cheese = Ingredient(name="Cheese", price=1.0, is_vegetarian=True, is_vegan=False)
+    tomato = Ingredient(name="Tomato", price=0.5, is_vegetarian=True, is_vegan=True)
+    bacon = Ingredient(name="Bacon", price=2.0, is_vegetarian=False, is_vegan=False)
 
-    session.add(pizza_item)
-    session.add(drink_item)
-    session.add(cheese)
-    session.add(tomato)
+    # Add menu items and ingredients to the session
+    session.add_all([pizza_item, drink_item, cheese, tomato, bacon])
+    session.commit()
+
+    # Associate ingredients with the Margherita pizza
+    pizza_ingredient_cheese = PizzaIngredient(menu_id=pizza_item.id, ingredient_id=cheese.id)
+    pizza_ingredient_tomato = PizzaIngredient(menu_id=pizza_item.id, ingredient_id=tomato.id)
+    session.add_all([pizza_ingredient_cheese, pizza_ingredient_tomato])
     session.commit()
 
     print("Menu items and ingredients added.\n")
@@ -64,11 +63,9 @@ def create_order_with_suborders(session, customer_id):
 
     # Add sub-orders
     print("Adding a sub-order for Margherita pizza...")
-    order_container.add_suborder(menu_id=1,
-                                 ingredient_ids=[1, 2])  # Assume Margherita (ID 1) and ingredients (Cheese, Tomato)
-
+    order_container.add_suborder(menu_id=session.query(Menu).filter_by(name='Margherita').first().id, ingredient_ids=[3]) # Assume Margherita pizza with Bacon (ID 3)
     print("Adding a sub-order for Coke drink...")
-    order_container.add_suborder(menu_id=2)  # Assume Coke (ID 2), no ingredients needed
+    order_container.add_suborder(menu_id=session.query(Menu).filter_by(name='Coke').first().id)  # Assume Coke (ID 2), no ingredients needed
 
     # Finalize and display order
     session.commit()
@@ -81,14 +78,17 @@ def display_order_details(session, customer_id):
 
     orders = session.query(CustomerOrders).filter_by(customer_id=customer_id).all()
     for order in orders:
+        rounded_price = round(order.total_cost, 2)
         print(
-            f"Order ID: {order.id}, Status: {order.status}, Total Cost: {order.total_cost}, Ordered At: {order.ordered_at}")
+            f"Order ID: {order.id}, Status: {order.status}, Total Cost: {rounded_price}, Ordered At: {order.ordered_at}")
 
     sub_orders = session.query(SubOrder).filter_by(order_id=orders[0].id).all()
     for sub_order in sub_orders:
-        print(f"SubOrder ID: {sub_order.id}, Menu Item ID: {sub_order.item_id}")
+        menu_item = session.query(Menu).filter_by(id=sub_order.item_id).first()
+        print(f"SubOrder ID: {sub_order.id}, Menu Item: {menu_item.name}, Price: {menu_item.price}")
+        print(f"Vegetarian: {'Yes' if menu_item.is_vegetarian(session) else 'No'}, Vegan: {'Yes' if menu_item.is_vegan(session) else 'No'}")
 
-    print("Order details displayed.\n")
+    print("Order details displayed with accurate prices.\n")
 
 def assign_order_driver(session, order_id):
     # Retrieve the order and customer details
@@ -106,7 +106,7 @@ def assign_order_driver(session, order_id):
     print(f"Customer's postal code: {postal_code}")
 
     # Check for recent delivery in the same postal code
-    current_time = datetime.now().replace(microsecond=0)  # Remove microseconds
+    current_time = datetime.now().replace(microsecond=0)
     print(f"Current time: {current_time}")
     
     recent_delivery = session.query(Delivery).join(DeliveryDriver).filter(
@@ -128,7 +128,6 @@ def assign_order_driver(session, order_id):
     ).first()
 
     if available_driver:
-        # Now handle the time difference calculation in Python
         driver_last_delivery = available_driver.last_delivery.replace(microsecond=0)
         time_difference = current_time - driver_last_delivery
 
@@ -180,7 +179,7 @@ def test_multiple_orders_single_driver(session, customer_id):
     
     # Create a second order for the same customer
     order_container_2 = OrderContainer(session=session, customer_id=customer_id)
-    order_container_2.add_suborder(menu_id=1)  # Assume Margherita pizza again
+    order_container_2.add_suborder(menu_id=session.query(Menu).filter_by(name='Margherita').first().id)  # Assume Margherita pizza again
     order_container_2.finalize_order()
     
     # Retrieve both orders
@@ -206,7 +205,7 @@ def test_no_available_drivers(session, customer_id):
     
     # Create a new order
     order_container = OrderContainer(session=session, customer_id=customer_id)
-    order_container.add_suborder(menu_id=1)  # Assume Margherita pizza again
+    order_container.add_suborder(menu_id=session.query(Menu).filter_by(name='Margherita').first().id)  # Assume Margherita pizza again
     order_container.finalize_order()
     
     # Attempt to assign a driver to the new order

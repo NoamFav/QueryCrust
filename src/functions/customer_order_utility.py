@@ -35,35 +35,34 @@ class OrderContainer:
         if not self.order:
             raise ValueError("Order has not been created yet. Call create_order() first.")
 
-        # Create the sub-order for the menu item
         sub_order = SubOrder(
             item_id=menu_id,
             order_id=self.order.id
         )
         self.session.add(sub_order)
-        self.sub_orders.append(sub_order)  # Keep track of sub-orders in the container
-        self.session.flush()  # this forces the database to assign it a primary key
-        #                                                                        \/
-        #                                                                        \/
-        # add ingredients if present                                             \/
-        if ingredient_ids:  #                                                    \/
-            for ingredient_id in ingredient_ids:  #                              \/
-                ordered_pizza_ingredient = OrderedIngredient(  #                 \/
-                    sub_order_id=sub_order.id,  # which we need here----------<<<<<
+        self.sub_orders.append(sub_order)
+        self.session.flush()
+
+        # Fetch the menu item and calculate the price
+        menu_item = self.session.query(Menu).filter_by(id=menu_id).first()
+        assert menu_item, f"Menu item with ID {menu_id} not found."
+        self.order.total_cost += menu_item.calculate_total_price(self.session)
+
+        if ingredient_ids:
+            for ingredient_id in ingredient_ids:
+                ordered_pizza_ingredient = OrderedIngredient(
+                    sub_order_id=sub_order.id,
                     ingredient_id=ingredient_id
                 )
                 self.session.add(ordered_pizza_ingredient)
-
-        # updating total cost (because i think it'll be easier to do expenses later)
-        menu_item = self.session.query(Menu).filter_by(id=menu_id).first()
-        if menu_item:
-            self.order.total_cost += menu_item.price  # adds the raw price of the item if it's not a pizza
-            if ingredient_ids:
-                for ingredient_id in ingredient_ids:
-                    ingredient = self.session.query(Ingredient).filter_by(id=ingredient_id).first()
-                    if ingredient:
-                        self.order.total_cost += ingredient.price
-
+                # Fetch the ingredient and calculate price with profit and VAT
+                ingredient = self.session.query(Ingredient).filter_by(id=ingredient_id).first()
+                ingredient_price = float(ingredient.price)
+                price_with_profit = ingredient_price * 1.4
+                final_price = price_with_profit * 1.09
+                self.order.total_cost += round(final_price, 2)
+        self.session.commit()
+    
     def validate_pizza_in_order(self):
         """
         Validate that the order contains at least one pizza.
