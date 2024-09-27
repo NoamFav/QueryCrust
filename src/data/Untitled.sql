@@ -58,8 +58,11 @@ CREATE TABLE `delivery_driver` (
 );
 
 CREATE TABLE `delivery` (
-  `delviered_by` integer,
-  `order` integer
+  `id` INTEGER PRIMARY KEY AUTOINCREMENT,  -- Unique ID for each delivery record
+  `delivered_by` INTEGER,                 -- The ID of the delivery driver
+  `order_id` INTEGER,                     -- The ID of the associated order
+  `assigned_at` DATETIME,                 -- Timestamp of when the delivery was created/assigned
+  `pizza_count` INTEGER DEFAULT 1,   
 );
 
 ALTER TABLE `customer_orders` ADD FOREIGN KEY (`customer_id`) REFERENCES `customer_personal_information` (`id`);

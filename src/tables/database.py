@@ -7,7 +7,7 @@ class CustomerPersonalInformation(Base):
     __tablename__ = 'customer_personal_information'
 
     id = Column(Integer, primary_key=True)
-    address = Column(Integer)
+    address = Column(String(50))
     birthday = Column(DateTime)
     phone_number = Column(Integer)
     gender = Column(String(18))
@@ -49,8 +49,11 @@ class CustomerOrders(Base):
 class Delivery(Base):
     __tablename__ = 'delivery'
 
+    id = Column(Integer, primary_key=True, autoincrement=True)
     delivered_by = Column(Integer, ForeignKey('delivery_driver.id'))
-    order_id = Column(Integer, ForeignKey('customer_orders.id'), primary_key=True)
+    order_id = Column(Integer, ForeignKey('customer_orders.id'))
+    assigned_at = Column(DateTime)
+    pizza_count = Column(Integer, default=1)
 
     driver = relationship('DeliveryDriver', back_populates='deliveries')
     order = relationship('CustomerOrders', back_populates='delivery')
@@ -60,7 +63,7 @@ class DeliveryDriver(Base):
     __tablename__ = 'delivery_driver'
 
     id = Column(Integer, primary_key=True)
-    delivery_area = Column(String(8))
+    delivery_area = Column(String(50))
     last_delivery = Column(DateTime)
 
     deliveries = relationship('Delivery', back_populates='driver')
