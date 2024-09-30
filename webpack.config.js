@@ -7,10 +7,13 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
     filename: 'main.js',
   },
+  resolve: {
+    extensions: ['.js', '.jsx'], // Add .jsx to handle React component imports
+  },
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.(js|jsx)$/, // Update to handle both .js and .jsx files
         exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
@@ -18,7 +21,7 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        use: ['style-loader', 'css-loader', 'postcss-loader'], // Add postcss-loader here
+        use: ['style-loader', 'css-loader', 'postcss-loader'], // Ensure postcss-loader is included
       },
     ],
   },
@@ -28,7 +31,7 @@ module.exports = {
       inject: 'body',
     }),
   ],
-  devServer: {watchFiles: ['src/**/*.html'], // Watch for changes in HTML files
+  devServer: {
     static: {
       directory: path.resolve(__dirname, 'dist'),
     },
@@ -36,7 +39,7 @@ module.exports = {
     port: 9000,
     hot: true, 
     open: true,
-    watchFiles: ['src/**/*.html'],
+    watchFiles: ['src/**/*.html'], // Watch for changes in HTML files
   },
   mode: 'development',
 };
