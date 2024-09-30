@@ -1,3 +1,5 @@
+'Deprecated'
+
 USE querycrust;
 CREATE TABLE `customer_personal_information` (
   `id` integer PRIMARY KEY,
