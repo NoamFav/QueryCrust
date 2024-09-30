@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from src.tables.database import *
+from src.data.database import *
 from customer_order_utility import *
 from gui_integration import *
 

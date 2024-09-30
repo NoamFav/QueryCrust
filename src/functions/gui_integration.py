@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import cast, String
 
-from src.tables.database import *
+from src.data.database import *
 
 
 # gets drink/dessert, or returns all ingredients associated with the pizza

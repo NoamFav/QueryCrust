@@ -1,6 +1,6 @@
 from sqlalchemy import engine
 
-from src.tables.database import *
+from src.data.database import *
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 
