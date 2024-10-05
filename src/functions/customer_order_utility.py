@@ -63,21 +63,18 @@ class OrderContainer:
                 self.order.total_cost += round(final_price, 2)
         self.session.commit()
     
-    def validate_pizza_in_order(self):
+    def validate_pizza_in_order(self) -> bool:
         """
         Validate that the order contains at least one pizza.
-        Raises a ValueError if no pizza is found in the sub-orders.
+        Returns True if pizza is detected in the order, otherwise False.
         """
-        has_pizza = False
         for sub_order in self.sub_orders:
             # Check if the sub_order's menu item belongs to the pizza category
             menu_item = self.session.query(Menu).filter_by(id=sub_order.item_id).first()
             if menu_item and menu_item.category == 'pizza':
-                has_pizza = True
-                break
+                return True
 
-        if not has_pizza:
-            raise ValueError("The order must contain at least one pizza.")
+        return False
 
     def finalize_order(self):
         """
