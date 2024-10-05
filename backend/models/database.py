@@ -1,20 +1,31 @@
-from sqlalchemy import Column, Integer, String, DateTime, select, func, ForeignKey, Float, create_engine, event, Boolean
-from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+from app import db
+from sqlalchemy import select, func, event
+from sqlalchemy.orm import relationship
 
-Base = declarative_base()
-
-class CustomerPersonalInformation(Base):
+class CustomerPersonalInformation(db.Model):
     __tablename__ = 'customer_personal_information'
 
-    id = Column(Integer, primary_key=True)
-    address = Column(String(50))
-    birthday = Column(DateTime)
-    phone_number = Column(Integer)
-    gender = Column(String(18))
-    previous_orders = Column(Integer)
-    age = Column(Integer)
+    id = db.Column(db.Integer, primary_key=True)
+    address = db.Column(db.String(50))
+    birthday = db.Column(db.DateTime)
+    phone_number = db.Column(db.Integer)
+    gender = db.Column(db.String(18))
+    previous_orders = db.Column(db.Integer)
+    age = db.Column(db.Integer)
+    name = db.Column(db.String(50))
+    email = db.Column(db.String(50))
 
     orders = relationship('CustomerOrders')
+
+    def __init__(self, address, birthday, phone_number, gender, previous_orders, age, name, email):
+        self.address = address
+        self.birthday = birthday
+        self.phone_number = phone_number
+        self.gender = gender
+        self.previous_orders = previous_orders
+        self.age = age
+        self.name = name
+        self.email = email
 
 
 @event.listens_for(CustomerPersonalInformation, 'before_insert')
@@ -30,72 +41,99 @@ def auto_increment_menu_id(mapper, connection, target):
     target.id = (max_id + 1) if max_id else 1
 
 
-class CustomerOrders(Base):
+class CustomerOrders(db.Model):
     __tablename__ = 'customer_orders'
 
-    id = Column(Integer, primary_key=True)
-    customer_id = Column(Integer, ForeignKey('customer_personal_information.id'))
-    total_cost = Column(Float)
-    delivery_eta = Column(DateTime)
-    ordered_at = Column(DateTime)
-    status = Column(String(10))
-    password = Column(String(30))
+    id = db.Column(db.Integer, primary_key=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer_personal_information.id'))
+    total_cost = db.Column(db.Float)
+    delivery_eta = db.Column(db.DateTime)
+    ordered_at = db.Column(db.DateTime)
+    status = db.Column(db.String(10))
+    password = db.Column(db.String(30))
 
     customer = relationship('CustomerPersonalInformation', back_populates='orders')
     sub_orders = relationship('SubOrder', back_populates='order')
     delivery = relationship('Delivery', back_populates='order')
 
+    def __init__(self, customer_id, total_cost, ordered_at, status, delivery_eta):
+        self.customer_id = customer_id
+        self.total_cost = total_cost
+        self.status = status
+        self.ordered_at = ordered_at
+        self.delivery_eta = delivery_eta
 
-class Delivery(Base):
+
+
+class Delivery(db.Model):
     __tablename__ = 'delivery'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    delivered_by = Column(Integer, ForeignKey('delivery_driver.id'))
-    order_id = Column(Integer, ForeignKey('customer_orders.id'))
-    assigned_at = Column(DateTime)
-    pizza_count = Column(Integer, default=1)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    delivered_by = db.Column(db.Integer, db.ForeignKey('delivery_driver.id'))
+    order_id = db.Column(db.Integer, db.ForeignKey('customer_orders.id'))
+    assigned_at = db.Column(db.DateTime)
+    pizza_count = db.Column(db.Integer, default=1)
 
     driver = relationship('DeliveryDriver', back_populates='deliveries')
     order = relationship('CustomerOrders', back_populates='delivery')
 
+    def __init__(self, delivered_by, order_id, assigned_at, pizza_count):
+        self.delivered_by = delivered_by
+        self.order_id = order_id
+        self.assigned_at = assigned_at
+        self.pizza_count = pizza_count
 
-class DeliveryDriver(Base):
+
+class DeliveryDriver(db.Model):
     __tablename__ = 'delivery_driver'
 
-    id = Column(Integer, primary_key=True)
-    delivery_area = Column(String(50))
-    last_delivery = Column(DateTime)
+    id = db.Column(db.Integer, primary_key=True)
+    delivery_area = db.Column(db.String(50))
+    last_delivery = db.Column(db.DateTime)
 
     deliveries = relationship('Delivery', back_populates='driver')
 
-class Discounts(Base):
+    def __init__(self, delivery_area, last_delivery):
+        self.delivery_area = delivery_area
+        self.last_delivery = last_delivery
+
+class Discounts(db.Model):
     __tablename__ = 'discounts'
 
-    id = Column(Integer, primary_key=True)
-    used = Column(Boolean)
+    id = db.Column(db.Integer, primary_key=True)
+    used = db.Column(db.Boolean)
 
-class SubOrder(Base):
+class SubOrder(db.Model):
     __tablename__ = 'sub_order'
 
-    id = Column(Integer, primary_key=True)
-    item_id = Column(Integer, ForeignKey('menu.id'))
-    order_id = Column(Integer, ForeignKey('customer_orders.id'))
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('menu.id'))
+    order_id = db.Column(db.Integer, db.ForeignKey('customer_orders.id'))
 
     # links to be able to go from sub-order to order and vice versa
     order = relationship('CustomerOrders', back_populates='sub_orders')
     menu_item = relationship('Menu', back_populates="sub_orders")
     ingredients = relationship("OrderedIngredient", back_populates="customer_orders")
 
+    def __init__(self, item_id, order_id):
+        self.item_id = item_id
+        self.order_id = order_id
 
-class Menu(Base):
+
+class Menu(db.Model):
     __tablename__ = 'menu'
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String(25))
-    price = Column(Float)
-    category = Column(String(10))
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(25))
+    price = db.Column(db.Float)
+    category = db.Column(db.String(10))
 
     sub_orders = relationship('SubOrder', back_populates='menu_item')
+
+    def __init__(self, name, price, category):
+        self.name = name
+        self.price = price
+        self.category = category
 
     def calculate_total_price(self, session):
         # Get all ingredients for this menu item
@@ -146,25 +184,30 @@ def set_menu_id(mapper, connection, target):
 
 
 # Association table for many-to-many relationship between Menu and Ingredient
-class OrderedIngredient(Base):
+class OrderedIngredient(db.Model):
     __tablename__ = 'ordered_pizza_ingredients'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    sub_order_id = Column(Integer, ForeignKey('sub_order.id'))
-    ingredient_id = Column(Integer, ForeignKey('ingredient.id'))
-
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    sub_order_id = db.Column(db.Integer, db.ForeignKey('sub_order.id'))
+    ingredient_id = db.Column(db.Integer, db.ForeignKey('ingredient.id'))
+    action = db.Column(db.String(5))
 
     # Relationships
     customer_orders = relationship("SubOrder", back_populates="ingredients")
     ingredient = relationship("Ingredient")
 
+    def __init__(self, sub_order_id, ingredient_id, action):
+        self.sub_order_id = sub_order_id
+        self.ingredient_id = ingredient_id
+        self.action = action
 
-class PizzaIngredient(Base):
+
+class PizzaIngredient(db.Model):
     __tablename__ = 'pizza_ingredient'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    menu_id = Column(Integer, ForeignKey('menu.id'))
-    ingredient_id = Column(Integer, ForeignKey('ingredient.id'))
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    menu_id = db.Column(db.Integer, db.ForeignKey('menu.id'))
+    ingredient_id = db.Column(db.Integer, db.ForeignKey('ingredient.id'))
 
 
     # Relationships
@@ -172,14 +215,14 @@ class PizzaIngredient(Base):
     ingredient = relationship("Ingredient", back_populates="menus")
 
 
-class Ingredient(Base):
+class Ingredient(db.Model):
     __tablename__ = 'ingredient'
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String(20))
-    price = Column(Float)
-    is_vegetarian = Column(Boolean)
-    is_vegan = Column(Boolean)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(20))
+    price = db.Column(db.Float)
+    is_vegetarian = db.Column(db.Boolean)
+    is_vegan = db.Column(db.Boolean)
 
     menus = relationship("PizzaIngredient", back_populates="ingredient")
 
