@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 from sqlalchemy import cast, String
@@ -18,6 +18,16 @@ def get_non_completed_orders(session: Session):
     # Query to filter customer orders where the status is not 'completed'
     active_orders = session.query(CustomerOrders).filter(CustomerOrders.status != 'completed').all()
     return active_orders
+
+# call when customer is trying to cancel order, returns True if order was cancelled, false if order cannot be cancelled (or is invalid)
+def cancel_order(session: Session, id: int):
+    five_minutes_ago = datetime.now() - timedelta(minutes=5)
+    order = session.query(CustomerOrders).filter(CustomerOrders.id == id, CustomerOrders.ordered_at >= five_minutes_ago).first()
+    if order:
+        session.delete(order)
+        session.commit()
+        return True
+    return False
 
 
 def create_customer_order(session: Session, customer_id: int, menu_id: int, ingredients_ids=None):
