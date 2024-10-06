@@ -1,11 +1,7 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from config import Config
 from flask_cors import CORS
-from flask_migrate import Migrate
-
-db = SQLAlchemy()
-migrate = Migrate()
+from models import db, migrate  # Import db and migrate from models
 
 def create_app():
     app = Flask(__name__)

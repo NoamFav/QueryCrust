@@ -1,6 +1,7 @@
+# routes/admin_routes.py
 from flask import Blueprint, jsonify, request
 from models.database import Menu, CustomerOrders, DeliveryDriver
-from app import db
+from models import db
 
 admin_bp = Blueprint('admin_bp', __name__)
 

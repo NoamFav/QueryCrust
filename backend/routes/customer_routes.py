@@ -1,7 +1,8 @@
+# routes/customer_routes.py
 from flask import Blueprint, jsonify, request
 from models.database import Menu, CustomerOrders, CustomerPersonalInformation, SubOrder, OrderedIngredient, Ingredient
 from datetime import datetime
-from app import db
+from models import db
 
 customer_bp = Blueprint('customer_bp', __name__)
 

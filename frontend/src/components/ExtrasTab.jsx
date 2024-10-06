@@ -6,9 +6,9 @@ const ExtrasTab = () => {
   const [extraItems, setExtraItems] = useState([]);
 
   useEffect(() => {
-    fetch('/api/customer/menu?category=extra')
+    fetch('http://localhost:5001/api/customer/menu?category=extra')
       .then(response => response.json())
-      .then(data => setDessertItems(data))
+      .then(data => setExtraItems(data))
       .catch(error => console.error('Error fetching extra items:', error));
   }, []);
 
@@ -24,4 +24,4 @@ const ExtrasTab = () => {
   );
 };
 
-export default DessertsTab;
+export default ExtrasTab;

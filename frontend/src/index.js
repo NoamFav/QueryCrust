@@ -5,7 +5,7 @@ import App from './components/App'; // Import your main App component
 import './styles/tailwind.css'; // Import your Tailwind CSS
 
 // Create the root and render the App component
-const root = ReactDOM.createRoot(document.getElementById('app'));
+const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <App /> {}

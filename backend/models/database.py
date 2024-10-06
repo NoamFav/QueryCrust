@@ -1,6 +1,7 @@
-from app import db
+# models/database.py
 from sqlalchemy import select, func, event
 from sqlalchemy.orm import relationship
+from models import db
 
 class CustomerPersonalInformation(db.Model):
     __tablename__ = 'customer_personal_information'
@@ -128,6 +129,8 @@ class Menu(db.Model):
     price = db.Column(db.Float)
     category = db.Column(db.String(10))
 
+    _max_ids = {}
+
     sub_orders = relationship('SubOrder', back_populates='menu_item')
 
     def __init__(self, name, price, category):
@@ -161,26 +164,26 @@ class Menu(db.Model):
 
 @event.listens_for(Menu, 'before_insert')
 def set_menu_id(mapper, connection, target):
-    # Define category codes
-    category_codes = {'pizza': 1, 'drink': 2, 'dessert': 3}
+    category_codes = {'pizza': 1, 'drink': 2, 'dessert': 3, 'extra': 4}
     category_code = category_codes.get(target.category.lower())
 
     if category_code is None:
         raise ValueError('Invalid category')
 
-    # Calculate the ID range based on category
     start_id = category_code * 1000
     end_id = start_id + 999
 
-    # Use SQLAlchemy's select() to query for the max id in the range
-    stmt = select(func.max(Menu.id)).where(Menu.id.between(start_id, end_id))
+    # Initialize the max_id for this category if not already set
+    if category_code not in Menu._max_ids:
+        # Query the database for the current max ID in this category
+        stmt = select(func.max(Menu.id)).where(Menu.id.between(start_id, end_id))
+        result = connection.execute(stmt)
+        max_id = result.scalar() or (start_id - 1)
+        Menu._max_ids[category_code] = max_id
 
-    # Execute the select statement using the connection
-    result = connection.execute(stmt)
-    max_id = result.scalar()
-
-    # Assign the new ID
-    target.id = (max_id + 1) if max_id else (start_id + 1)
+    # Increment the max_id and assign it to the new record
+    Menu._max_ids[category_code] += 1
+    target.id = Menu._max_ids[category_code]
 
 
 # Association table for many-to-many relationship between Menu and Ingredient
@@ -214,6 +217,10 @@ class PizzaIngredient(db.Model):
     menu = relationship("Menu")
     ingredient = relationship("Ingredient", back_populates="menus")
 
+    def __init__(self, menu_id, ingredient_id):
+        self.menu_id = menu_id
+        self.ingredient_id = ingredient_id
+
 
 class Ingredient(db.Model):
     __tablename__ = 'ingredient'
@@ -226,6 +233,8 @@ class Ingredient(db.Model):
 
     menus = relationship("PizzaIngredient", back_populates="ingredient")
 
-
-
-
+    def __init__(self, name, price, is_vegetarian, is_vegan):
+        self.name = name
+        self.price = price
+        self.is_vegetarian = is_vegetarian
+        self.is_vegan = is_vegan

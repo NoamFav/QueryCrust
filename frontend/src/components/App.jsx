@@ -14,7 +14,6 @@ function App() {
         <Routes>
           <Route path="/" element={<CategoryTabs />} />
           <Route path="/customize-pizza/:id" element={<PizzaCustomization />} />
-          {/* Add other routes as needed */}
         </Routes>
       </Router>
     </CartProvider>

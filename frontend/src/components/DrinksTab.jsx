@@ -6,9 +6,9 @@ const DrinksTab = () => {
   const [drinkItems, setDrinkItems] = useState([]);
 
   useEffect(() => {
-    fetch('/api/customer/menu?category=drink')
+    fetch('http://localhost:5001/api/customer/menu?category=drink')
       .then(response => response.json())
-      .then(data => setDessertItems(data))
+      .then(data => setDrinkItems(data))
       .catch(error => console.error('Error fetching drinks items:', error));
   }, []);
 
@@ -24,4 +24,4 @@ const DrinksTab = () => {
   );
 };
 
-export default DessertsTab;
+export default DrinksTab;
