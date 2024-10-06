@@ -11,7 +11,7 @@ const MenuItem = ({ item, category }) => {
     if (category === 'pizza') {
       navigate(`/customize-pizza/${item.id}`);
     } else {
-      addToCart({ ...item, quantity: 1 });
+      addToCart(item.id, 1);
     }
   };
 

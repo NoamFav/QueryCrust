@@ -2,6 +2,7 @@
 from sqlalchemy import select, func, event
 from sqlalchemy.orm import relationship
 from models import db
+from datetime import datetime
 
 class CustomerPersonalInformation(db.Model):
     __tablename__ = 'customer_personal_information'
@@ -238,3 +239,23 @@ class Ingredient(db.Model):
         self.price = price
         self.is_vegetarian = is_vegetarian
         self.is_vegan = is_vegan
+
+class Cart(db.Model):
+    __tablename__ = 'cart'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer_personal_information.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    items = db.relationship('CartItem', backref='cart', lazy=True)
+
+class CartItem(db.Model):
+    __tablename__ = 'cart_item'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    cart_id = db.Column(db.Integer, db.ForeignKey('cart.id'), nullable=False)
+    menu_id = db.Column(db.Integer, db.ForeignKey('menu.id'), nullable=False)
+    quantity = db.Column(db.Integer, default=1)
+    menu_item = db.relationship('Menu')
+
+    def __init__(self, cart_id, menu_id, quantity):
+        self.cart_id = cart_id
+        self.menu_id = menu_id
+        self.quantity = quantity

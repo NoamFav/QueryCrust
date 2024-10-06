@@ -1,24 +1,24 @@
 // src/components/PizzaCustomization.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react'; // Import useContext
 import { useParams } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../context/CartContext'; // Import useCart
 
 const PizzaCustomization = () => {
   const { id } = useParams();
   const [pizzaItem, setPizzaItem] = useState(null);
   const [ingredients, setIngredients] = useState([]);
   const [selectedIngredients, setSelectedIngredients] = useState([]);
-  const { addToCart } = useCart();
+  const { addToCart } = useCart(); // Use useCart hook
 
   useEffect(() => {
     // Fetch the pizza item
-    fetch(`/api/customer/menu/${id}`)
+    fetch(`http://localhost:5001/api/customer/menu/${id}`)
       .then(response => response.json())
       .then(data => setPizzaItem(data))
       .catch(error => console.error('Error fetching pizza item:', error));
 
     // Fetch available ingredients
-    fetch('/api/customer/ingredients')
+    fetch('http://localhost:5001/api/customer/ingredients')
       .then(response => response.json())
       .then(data => setIngredients(data))
       .catch(error => console.error('Error fetching ingredients:', error));
@@ -35,14 +35,10 @@ const PizzaCustomization = () => {
   };
 
   const handleAddToCart = () => {
-    addToCart({
-      ...pizzaItem,
-      quantity: 1,
-      customizations: selectedIngredients.map(ingredientId => ({
-        ingredient_id: ingredientId,
-        action: 'add', // or 'remove' based on your logic
-      })),
-    });
+    addToCart(pizzaItem.id, 1, selectedIngredients.map(ingredientId => ({
+      ingredient_id: ingredientId,
+      action: 'add', // or 'remove' based on your logic
+    })));
   };
 
   if (!pizzaItem) {

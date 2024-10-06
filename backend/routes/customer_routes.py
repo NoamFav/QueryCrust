@@ -1,8 +1,9 @@
 # routes/customer_routes.py
-from flask import Blueprint, jsonify, request
-from models.database import Menu, CustomerOrders, CustomerPersonalInformation, SubOrder, OrderedIngredient, Ingredient
+from flask import Blueprint, jsonify, request, session
+from models.database import Menu, CustomerOrders, CustomerPersonalInformation, SubOrder, OrderedIngredient, Ingredient, Cart, CartItem
 from datetime import datetime
 from models import db
+import traceback
 
 customer_bp = Blueprint('customer_bp', __name__)
 
@@ -127,3 +128,87 @@ def place_order():
     db.session.commit()
 
     return jsonify({'message': 'Order placed successfully', 'order_id': order.id}), 201
+
+@customer_bp.route('/cart', methods=['GET'])
+def get_cart():
+    cart = get_or_create_cart()
+    cart_items = [
+        {
+            'id': item.id,
+            'menu_id': item.menu_id,
+            'name': item.menu_item.name,
+            'price': item.menu_item.price,
+            'quantity': item.quantity,
+            'total_price': item.menu_item.price * item.quantity
+        }
+        for item in cart.items
+    ]
+    return jsonify(cart_items)
+
+@customer_bp.route('/cart/add', methods=['POST'])
+def add_to_cart():
+    try:
+        data = request.get_json()
+        menu_id = data.get('menu_id')
+        quantity = data.get('quantity', 1)
+        customizations = data.get('customizations', [])
+
+        print(f"Received menu_id: {menu_id} (type: {type(menu_id)})")
+        print(f"Received quantity: {quantity} (type: {type(quantity)})")
+        print(f"Received customizations: {customizations} (type: {type(customizations)})")
+
+        if not menu_id:
+            return jsonify({'error': 'Menu ID is required'}), 400
+
+        menu_item = Menu.query.get(menu_id)
+        if not menu_item:
+            return jsonify({'error': 'Menu item not found'}), 404
+
+        cart = get_or_create_cart()
+
+        # Check if item already exists in cart
+        cart_item = CartItem.query.filter_by(cart_id=cart.id, menu_id=menu_id).first()
+        if cart_item:
+            cart_item.quantity += quantity
+            # Handle customizations if needed
+            # For simplicity, ignoring customizations here
+        else:
+            cart_item = CartItem(cart_id=cart.id, menu_id=menu_id, quantity=quantity)
+            db.session.add(cart_item)
+
+        db.session.commit()
+        return jsonify({'message': 'Item added to cart'}), 200
+
+    except Exception as e:
+        # Log the error with traceback
+        print("Error in /cart/add:", e)
+        traceback.print_exc()
+        return jsonify({'error': 'Internal Server Error'}), 500
+
+@customer_bp.route('/cart/remove', methods=['POST'])
+def remove_from_cart():
+    data = request.get_json()
+    cart_item_id = data.get('cart_item_id')
+    if not cart_item_id:
+        return jsonify({'error': 'Cart item ID is required'}), 400
+
+    cart_item = CartItem.query.get(cart_item_id)
+    if not cart_item:
+        return jsonify({'error': 'Cart item not found'}), 404
+
+    db.session.delete(cart_item)
+    db.session.commit()
+    return jsonify({'message': 'Item removed from cart'})
+
+def get_or_create_cart():
+    cart_id = session.get('cart_id')
+    if cart_id:
+        cart = Cart.query.get(cart_id)
+        if cart:
+            return cart
+    # Create a new cart
+    cart = Cart()
+    db.session.add(cart)
+    db.session.commit()
+    session['cart_id'] = cart.id
+    return cart

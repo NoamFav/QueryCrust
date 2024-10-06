@@ -5,6 +5,7 @@ import CategoryTabs from './CategoryTabs';
 import PizzaCustomization from './PizzaCustomization';
 import { CartProvider } from '../context/CartContext'; // Import CartProvider
 import Navbar from './Navbar'; // Import Navbar
+import Cart from './Cart'; // Import Cart
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Routes>
           <Route path="/" element={<CategoryTabs />} />
           <Route path="/customize-pizza/:id" element={<PizzaCustomization />} />
+          <Route path="/cart" element={<Cart />} />
         </Routes>
       </Router>
     </CartProvider>
