@@ -5,7 +5,7 @@ echo "Starting Flask backend..."
 cd backend
 export FLASK_APP=app.py  # Replace with the actual Flask entry point
 export FLASK_ENV=development  # Or 'production'
-flask run &
+python3 app.py &
 FLASK_PID=$!  # Capture Flask process ID
 
 # Navigate to the frontend directory and start npm
