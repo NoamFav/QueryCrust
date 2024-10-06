@@ -1,6 +1,6 @@
 from sqlalchemy import engine
 
-from src.data.database import *
+from backend.models.database import CustomerOrders, Menu, SubOrder, Ingredient, OrderedIngredient
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 
@@ -52,11 +52,13 @@ class OrderContainer:
             for ingredient_id in ingredient_ids:
                 ordered_pizza_ingredient = OrderedIngredient(
                     sub_order_id=sub_order.id,
-                    ingredient_id=ingredient_id
+                    ingredient_id=ingredient_id,
+                    action='add'
                 )
                 self.session.add(ordered_pizza_ingredient)
                 # Fetch the ingredient and calculate price with profit and VAT
                 ingredient = self.session.query(Ingredient).filter_by(id=ingredient_id).first()
+                assert ingredient, f"Ingredient with ID {ingredient_id} not found."
                 ingredient_price = float(ingredient.price)
                 price_with_profit = ingredient_price * 1.4
                 final_price = price_with_profit * 1.09

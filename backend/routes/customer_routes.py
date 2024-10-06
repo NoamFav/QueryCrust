@@ -14,6 +14,7 @@ def get_menu():
 @customer_bp.route('/order', methods=['POST'])
 def place_order():
     data = request.get_json()
+    print(data)
     customer_info = data.get('customer_info')
     items = data.get('items')
 

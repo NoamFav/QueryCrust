@@ -8,7 +8,7 @@ class CustomerPersonalInformation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     address = db.Column(db.String(50))
     birthday = db.Column(db.DateTime)
-    phone_number = db.Column(db.Integer)
+    phone_number = db.Column(db.String(15))
     gender = db.Column(db.String(18))
     previous_orders = db.Column(db.Integer)
     age = db.Column(db.Integer)
