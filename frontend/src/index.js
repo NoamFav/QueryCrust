@@ -1,7 +1,7 @@
-// src/site/index.js
+// src/index.js
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './component/App'; // Import your main App component
+import App from './components/App'; // Import your main App component
 import './styles/tailwind.css'; // Import your Tailwind CSS
 
 // Create the root and render the App component

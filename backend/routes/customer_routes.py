@@ -7,9 +7,29 @@ customer_bp = Blueprint('customer_bp', __name__)
 
 @customer_bp.route('/menu', methods=['GET'])
 def get_menu():
-    items = Menu.query.all()
+    category = request.args.get('category')
+    if category:
+        items = Menu.query.filter_by(category=category.lower()).all()
+    else:
+        items = Menu.query.all()
     menu = [{'id': item.id, 'name': item.name, 'price': item.price, 'category': item.category} for item in items]
     return jsonify(menu)
+
+@customer_bp.route('/menu/<int:item_id>', methods=['GET'])
+def get_menu_item(item_id):
+    item = Menu.query.get_or_404(item_id)
+    return jsonify({
+        'id': item.id,
+        'name': item.name,
+        'price': item.price,
+        'category': item.category
+    })
+
+@customer_bp.route('/ingredients', methods=['GET'])
+def get_ingredients():
+    ingredients = Ingredient.query.all()
+    ingredient_list = [{'id': ingr.id, 'name': ingr.name, 'price': ingr.price} for ingr in ingredients]
+    return jsonify(ingredient_list)
 
 @customer_bp.route('/order', methods=['POST'])
 def place_order():
