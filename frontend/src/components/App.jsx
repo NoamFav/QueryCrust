@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import CategoryTabs from './CategoryTabs';
 import PizzaCustomization from './PizzaCustomization';
 import { CartProvider } from '../context/CartContext'; // Import CartProvider
-import Navbar from './Navbar'; // Import Navbar
+import Navbar from './NavBar'; // Import Navbar
 import Cart from './Cart'; // Import Cart
 
 function App() {
