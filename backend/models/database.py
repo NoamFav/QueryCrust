@@ -3,6 +3,7 @@ from sqlalchemy import select, func, event
 from sqlalchemy.orm import relationship
 from models import db
 from datetime import datetime
+from sqlalchemy.dialects.postgresql import JSON
 
 class CustomerPersonalInformation(db.Model):
     __tablename__ = 'customer_personal_information'
@@ -11,6 +12,7 @@ class CustomerPersonalInformation(db.Model):
     address = db.Column(db.String(50))
     birthday = db.Column(db.DateTime)
     phone_number = db.Column(db.String(15))
+    password = db.Column(db.String(100))
     gender = db.Column(db.String(18))
     previous_orders = db.Column(db.Integer)
     age = db.Column(db.Integer)
@@ -19,7 +21,7 @@ class CustomerPersonalInformation(db.Model):
 
     orders = relationship('CustomerOrders')
 
-    def __init__(self, address, birthday, phone_number, gender, previous_orders, age, name, email):
+    def __init__(self, address, birthday, phone_number, gender, previous_orders, age, name, email, password):
         self.address = address
         self.birthday = birthday
         self.phone_number = phone_number
@@ -28,6 +30,7 @@ class CustomerPersonalInformation(db.Model):
         self.age = age
         self.name = name
         self.email = email
+        self.password = password
 
 
 @event.listens_for(CustomerPersonalInformation, 'before_insert')
@@ -252,10 +255,12 @@ class CartItem(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     cart_id = db.Column(db.Integer, db.ForeignKey('cart.id'), nullable=False)
     menu_id = db.Column(db.Integer, db.ForeignKey('menu.id'), nullable=False)
+    customizations = db.Column(db.JSON, nullable=True)
     quantity = db.Column(db.Integer, default=1)
     menu_item = db.relationship('Menu')
 
-    def __init__(self, cart_id, menu_id, quantity):
+    def __init__(self, cart_id, menu_id, quantity, customizations=None):
         self.cart_id = cart_id
         self.menu_id = menu_id
         self.quantity = quantity
+        self.customizations = customizations or []

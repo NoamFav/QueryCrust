@@ -29,18 +29,18 @@ const Cart = () => {
                   <h3 className="text-xl font-semibold">{item.name}</h3>
                   <p className="text-gray-700">Price: ${item.price.toFixed(2)}</p>
                   <p className="text-gray-700">Quantity: {item.quantity}</p>
-                  {item.customizations && item.customizations.length > 0 && (
+                  {Array.isArray(item.customizations) && item.customizations.length > 0 && (
                     <div className="mt-2">
                       <p className="font-semibold">Customizations:</p>
                       <ul className="list-disc list-inside">
                         {item.customizations.map((custom, index) => (
                           <li key={index}>
-                            Ingredient ID: {custom.ingredient_id} - Action: {custom.action}
+                            Ingredient: {custom.name || 'Unknown Ingredient'}
                           </li>
                         ))}
                       </ul>
                     </div>
-                  )}
+                  )}                
                 </div>
                 <div className="flex flex-col items-end">
                   <p className="text-lg font-semibold">Total: ${item.total_price.toFixed(2)}</p>

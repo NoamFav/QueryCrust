@@ -37,6 +37,7 @@ const PizzaCustomization = () => {
   const handleAddToCart = () => {
     addToCart(pizzaItem.id, 1, selectedIngredients.map(ingredientId => ({
       ingredient_id: ingredientId,
+      name: ingredients.find(ingredient => ingredient.id === ingredientId).name,
       action: 'add', // or 'remove' based on your logic
     })));
   };

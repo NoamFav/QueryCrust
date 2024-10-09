@@ -1,8 +1,8 @@
-"""initial migration
+"""Initial migration
 
-Revision ID: 97b5d178a6c5
+Revision ID: 764720b4e852
 Revises: 
-Create Date: 2024-10-06 12:09:34.423011
+Create Date: 2024-10-09 13:24:36.370438
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '97b5d178a6c5'
+revision = '764720b4e852'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -22,7 +22,8 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('address', sa.String(length=50), nullable=True),
     sa.Column('birthday', sa.DateTime(), nullable=True),
-    sa.Column('phone_number', sa.Integer(), nullable=True),
+    sa.Column('phone_number', sa.String(length=15), nullable=True),
+    sa.Column('password', sa.String(length=30), nullable=True),
     sa.Column('gender', sa.String(length=18), nullable=True),
     sa.Column('previous_orders', sa.Integer(), nullable=True),
     sa.Column('age', sa.Integer(), nullable=True),
@@ -56,6 +57,13 @@ def upgrade():
     sa.Column('category', sa.String(length=10), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('cart',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('customer_id', sa.Integer(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['customer_id'], ['customer_personal_information.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('customer_orders',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('customer_id', sa.Integer(), nullable=True),
@@ -72,6 +80,16 @@ def upgrade():
     sa.Column('menu_id', sa.Integer(), nullable=True),
     sa.Column('ingredient_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['ingredient_id'], ['ingredient.id'], ),
+    sa.ForeignKeyConstraint(['menu_id'], ['menu.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('cart_item',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('cart_id', sa.Integer(), nullable=False),
+    sa.Column('menu_id', sa.Integer(), nullable=False),
+    sa.Column('customizations', sa.JSON(), nullable=True),
+    sa.Column('quantity', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['cart_id'], ['cart.id'], ),
     sa.ForeignKeyConstraint(['menu_id'], ['menu.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -110,8 +128,10 @@ def downgrade():
     op.drop_table('ordered_pizza_ingredients')
     op.drop_table('sub_order')
     op.drop_table('delivery')
+    op.drop_table('cart_item')
     op.drop_table('pizza_ingredient')
     op.drop_table('customer_orders')
+    op.drop_table('cart')
     op.drop_table('menu')
     op.drop_table('ingredient')
     op.drop_table('discounts')

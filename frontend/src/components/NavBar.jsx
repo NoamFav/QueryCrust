@@ -15,7 +15,7 @@ return (
       QueryCrust    
     </div>
     <div className="flex items-center space-x-4">
-      <Link to="/" className="text-white hover:text-gray-200">
+      <Link to="/menu" className="text-white hover:text-gray-200">
         Menu
       </Link>
       <Link to="/cart" className="relative text-white hover:text-gray-200">
@@ -26,7 +26,7 @@ return (
           </span>
         )}
       </Link>
-    </div>  
+    </div>
   </nav>
 )};
 

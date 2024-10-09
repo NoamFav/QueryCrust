@@ -4,8 +4,77 @@ from models.database import Menu, CustomerOrders, CustomerPersonalInformation, S
 from datetime import datetime
 from models import db
 import traceback
+import bcrypt
 
 customer_bp = Blueprint('customer_bp', __name__)
+
+@customer_bp.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    email = data.get('email').strip()
+    password = data.get('password').strip()
+
+    if not email or not password:
+        return jsonify({'error': 'Email and password are required'}), 400
+
+    # Check if the user exists
+    user = CustomerPersonalInformation.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    # Convert the hashed password back to bytes (it might be stored as a string)
+    hashed_password = user.password.encode('utf-8') if isinstance(user.password, str) else user.password
+
+    # Check if the password matches the hashed password
+    if not bcrypt.checkpw(password.encode('utf-8'), hashed_password):
+        return jsonify({'error': 'Invalid password'}), 401
+
+    return jsonify({'message': 'Login successful', 'user_id': user.id})
+
+@customer_bp.route('/signin', methods=['POST'])
+def register():
+    data = request.get_json()
+    address = data.get('address')
+    phone_number = data.get('phone_number')
+    password = data.get('password')
+    name = data.get('name')
+    email = data.get('email')
+    birthday = data.get('birthday')
+    age = data.get('age')
+    gender = data.get('gender')
+
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+
+    if not address or not phone_number or not name or not email or not birthday or not age or not gender or not password:
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    new_user = CustomerPersonalInformation(
+        address=address,
+        phone_number=phone_number,
+        name=name,
+        email=email,
+        birthday=birthday,
+        age=age,
+        gender=gender,
+        previous_orders=0,
+        password=hashed_password  # Store the hashed password
+    )
+    db.session.add(new_user)
+    db.session.commit()
+    return jsonify({
+    'message': 'User created successfully',
+    'user_id': new_user.id,
+    'address': address,
+    'phone_number': phone_number,
+    'name': name,
+    'email': email,
+    'birthday': birthday,
+    'age': age,
+    'gender': gender,
+    'previous_orders': 0,
+    'password': password
+    }), 201
 
 @customer_bp.route('/menu', methods=['GET'])
 def get_menu():
@@ -139,6 +208,7 @@ def get_cart():
             'name': item.menu_item.name,
             'price': item.menu_item.price,
             'quantity': item.quantity,
+            'customizations': item.customizations if item.customizations else [],
             'total_price': item.menu_item.price * item.quantity
         }
         for item in cart.items
@@ -169,13 +239,15 @@ def add_to_cart():
         # Check if item already exists in cart
         cart_item = CartItem.query.filter_by(cart_id=cart.id, menu_id=menu_id).first()
         if cart_item:
-            cart_item.quantity += quantity
-            # Handle customizations if needed
-            # For simplicity, ignoring customizations here
+            cart_item.customizations = customizations   
         else:
-            cart_item = CartItem(cart_id=cart.id, menu_id=menu_id, quantity=quantity)
+            cart_item = CartItem(
+                cart_id=cart.id,
+                menu_id=menu_id,
+                quantity=quantity,
+                customizations=customizations if isinstance(customizations, list) else []
+            )
             db.session.add(cart_item)
-
         db.session.commit()
         return jsonify({'message': 'Item added to cart'}), 200
 
