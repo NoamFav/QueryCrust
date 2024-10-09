@@ -112,28 +112,10 @@ def place_order():
     if not customer_info or not items:
         return jsonify({'error': 'Missing customer info or items'}), 400
 
-    # Extract customer details
-    address = customer_info.get('address')
-    phone_number = customer_info.get('phone_number')
-    name = customer_info.get('name')
-    email = customer_info.get('email')
-    birthday = customer_info.get('birthday')
-    age = customer_info.get('age')
-    gender = customer_info.get('gender')
+    db.session.flush()  # Get customer.ingredients
 
-    # Create a new customer record
-    customer = CustomerPersonalInformation(
-        address=address,
-        phone_number=phone_number,
-        name=name,
-        birthday=birthday,
-        email=email,
-        gender=gender,
-        previous_orders=0,
-        age=age
-    )
-    db.session.add(customer)
-    db.session.flush()  # Get customer.id
+    customer = CustomerPersonalInformation.query.get(customer_info.get('customer_id'))
+    assert customer, f'Customer with id {customer_info.get("customer_id")} not found'
 
     # Create a new customer order
     order = CustomerOrders(
@@ -209,7 +191,7 @@ def get_cart():
             'price': item.menu_item.price,
             'quantity': item.quantity,
             'customizations': item.customizations if item.customizations else [],
-            'total_price': item.menu_item.price * item.quantity
+            'total_price': item.total_price
         }
         for item in cart.items
     ]
@@ -245,7 +227,8 @@ def add_to_cart():
                 cart_id=cart.id,
                 menu_id=menu_id,
                 quantity=quantity,
-                customizations=customizations if isinstance(customizations, list) else []
+                customizations=customizations if isinstance(customizations, list) else [],
+                total_price=menu_item.price * quantity + sum(customization.get('price',0) for customization in customizations)
             )
             db.session.add(cart_item)
         db.session.commit()

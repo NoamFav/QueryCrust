@@ -36,7 +36,7 @@ const Cart = () => {
                         <ul className="list-disc list-inside text-gray-600">
                           {item.customizations.map((custom, index) => (
                             <li key={index}>
-                              Ingredient: {custom.name || 'Unknown Ingredient'}
+                              Ingredient: {custom.name || 'Unknown Ingredient'} ({custom.action === 'add' ? 'Add' : 'Remove'}) - ${custom.price.toFixed(2)}
                             </li>
                           ))}
                         </ul>

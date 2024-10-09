@@ -1,5 +1,6 @@
 // src/components/PizzaCustomization.jsx
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 
@@ -39,6 +40,7 @@ const PizzaCustomization = () => {
       ingredient_id: ingredientId,
       name: ingredients.find(ingredient => ingredient.id === ingredientId).name,
       action: 'add', // or 'remove' based on your logic
+      price: ingredients.find(ingredient => ingredient.id === ingredientId).price
     })));
   };
 
@@ -65,12 +67,16 @@ const PizzaCustomization = () => {
             </label>
           ))}
         </div>
+      <Link to="/menu">
         <button
           className="w-full mt-6 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600 transition duration-200"
-          onClick={handleAddToCart}
+          onClick={
+              handleAddToCart
+          }
         >
           Add to Cart
         </button>
+      </Link>
       </div>
     </div>
   );

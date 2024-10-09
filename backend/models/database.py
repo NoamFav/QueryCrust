@@ -129,7 +129,7 @@ class Menu(db.Model):
     __tablename__ = 'menu'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(25))
+    name = db.Column(db.String(255))
     price = db.Column(db.Float)
     category = db.Column(db.String(10))
 
@@ -256,11 +256,13 @@ class CartItem(db.Model):
     cart_id = db.Column(db.Integer, db.ForeignKey('cart.id'), nullable=False)
     menu_id = db.Column(db.Integer, db.ForeignKey('menu.id'), nullable=False)
     customizations = db.Column(db.JSON, nullable=True)
+    total_price = db.Column(db.Float, nullable=False)
     quantity = db.Column(db.Integer, default=1)
     menu_item = db.relationship('Menu')
 
-    def __init__(self, cart_id, menu_id, quantity, customizations=None):
+    def __init__(self, cart_id, menu_id, quantity, total_price, customizations=None):
         self.cart_id = cart_id
         self.menu_id = menu_id
         self.quantity = quantity
         self.customizations = customizations or []
+        self.total_price = total_price
