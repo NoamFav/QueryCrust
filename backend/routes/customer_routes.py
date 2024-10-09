@@ -129,81 +129,54 @@ def get_ingredients():
 
 @customer_bp.route('/order', methods=['POST'])
 def place_order():
-    data = request.get_json()
-    print(data)
-    customer_info = data.get('customer_info')
-    items = data.get('items')
+    try:
+        user_id = session.get('user_id')
 
-    if not customer_info or not items:
-        return jsonify({'error': 'Missing customer info or items'}), 400
+        if not user_id:
+            return jsonify({'error': 'User not authenticated'}), 401
 
-    db.session.flush()  # Get customer.ingredients
+        # Get user's cart
+        cart = Cart.query.filter_by(customer_id=user_id).first()
 
-    customer = CustomerPersonalInformation.query.get(customer_info.get('customer_id'))
-    assert customer, f'Customer with id {customer_info.get("customer_id")} not found'
+        if not cart or not cart.items:
+            return jsonify({'error': 'Cart is empty'}), 400
 
-    # Create a new customer order
-    order = CustomerOrders(
-        customer_id=customer.id,
-        total_cost=0,  # TODO: Update total cost
-        ordered_at=datetime.now(),
-        status='Pending',
-        delivery_eta=None # TODO: Update delivery ETA
-    )
-    db.session.add(order)
-    db.session.flush()  # Get order.id
-
-    total_cost = 0
-
-    # Process each item
-    for item in items:
-        menu_item_id = item.get('menu_item_id')
-        quantity = item.get('quantity', 1) # TODO: Handle quantity
-        customizations = item.get('customizations', [])  # List of ingredient IDs to add or remove
-
-        menu_item = Menu.query.get(menu_item_id)
-        if not menu_item:
-            return jsonify({'error': f'Menu item with id {menu_item_id} not found'}), 404
-
-        # Create a sub-order for each item
-        sub_order = SubOrder(
-            order_id=order.id,
-            item_id=menu_item.id,
+        # Create a new customer order
+        total_cost = sum(item.total_price for item in cart.items)
+        new_order = CustomerOrders(
+            customer_id=user_id,
+            total_cost=total_cost,
+            ordered_at=datetime.now(),
+            status='Pending',
+            delivery_eta=None  # You can calculate this later
         )
-        db.session.add(sub_order * quantity)
-        db.session.flush()  # Get sub_order.id
+        db.session.add(new_order)
+        db.session.flush()  # Get the order.id
 
-        # Handle customizations
-        for customization in customizations:
-            ingredient_id = customization.get('ingredient_id')
-            action = customization.get('action')  # 'add' or 'remove'
-
-            ingredient = Ingredient.query.get(ingredient_id)
-            if not ingredient:
-                return jsonify({'error': f'Ingredient with id {ingredient_id} not found'}), 404
-
-            ordered_ingredient = OrderedIngredient(
-                sub_order_id=sub_order.id,
-                ingredient_id=ingredient.id,
-                action=action
+        # Create sub-orders and clear the cart
+        for cart_item in cart.items:
+            sub_order = SubOrder(
+                order_id=new_order.id,
+                item_id=cart_item.menu_id
             )
-            db.session.add(ordered_ingredient)
+            db.session.add(sub_order)
+            db.session.delete(cart_item)  # Remove the item from the cart
 
-            # Update total cost based on customizations
-            if action == 'add':
-                total_cost += ingredient.price * quantity
-            elif action == 'remove':
-                total_cost -= ingredient.price * quantity
+        for item in cart.items:
+            db.session.delete(item)
 
-        # Update total cost for the menu item
-        total_cost += menu_item.price * quantity
+        # Commit everything and return the order info
+        db.session.commit()
 
-    # Update the order's total cost
-    order.total_cost = total_cost
-
-    db.session.commit()
-
-    return jsonify({'message': 'Order placed successfully', 'order_id': order.id}), 201
+        return jsonify({
+            'message': 'Order placed successfully',
+            'order_id': new_order.id,
+            'total_cost': new_order.total_cost,
+            'ordered_at': new_order.ordered_at
+        }), 201
+    except Exception as e:
+        print(f"Error placing order: {e}")
+        return jsonify({'error': 'Internal Server Error'}), 500
 
 @customer_bp.route('/cart', methods=['GET'])
 def get_cart():

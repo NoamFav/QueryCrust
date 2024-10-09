@@ -25,6 +25,9 @@ const Navbar = () => {
               </span>
             )}
           </Link>
+          <Link to="/checkout" className="text-white hover:text-gray-300 transition duration-200">
+            Checkout
+          </Link>
         </div>
       </div>
     </nav>

@@ -1,13 +1,18 @@
 // src/components/Cart.jsx
 import React from 'react';
 import { useCart } from '../context/CartContext'; // Import the useCart hook
-import { Link } from 'react-router-dom'; // For navigation
+import { Link , useNavigate} from 'react-router-dom'; // For navigation
 
 const Cart = () => {
   const { cartItems, removeFromCart } = useCart(); // Destructure cartItems and removeFromCart from context
+  const navigate = useNavigate(); // Initialize the navigate hook
 
   // Calculate total price
   const totalPrice = cartItems.reduce((acc, item) => acc + item.total_price, 0);
+
+  const handleProceedToCheckout = () => {
+    navigate('/checkout'); // Navigate to the checkout page
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 p-20">
@@ -58,7 +63,7 @@ const Cart = () => {
 
             <div className="mt-6 flex justify-between items-center">
               <p className="text-xl font-semibold">Grand Total: ${totalPrice.toFixed(2)}</p>
-              <button className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition ease-in-out duration-200">
+            <button className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition ease-in-out duration-200" onClick={handleProceedToCheckout}>
                 Proceed to Checkout
               </button>
             </div>

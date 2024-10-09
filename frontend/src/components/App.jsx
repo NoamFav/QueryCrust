@@ -8,6 +8,7 @@ import NavBar from './NavBar'; // Navigation Bar
 import CategoryTabs from './CategoryTabs'; // Main content page
 import { CartProvider } from '../context/CartContext'; // Cart Context
 import PizzaCustomization from './PizzaCustomization';
+import Checkout from './Checkout';
 
 function App() {
   // State to track if the user is authenticated
@@ -36,13 +37,17 @@ function App() {
               isAuthenticated ? <CategoryTabs /> : <Navigate to="/" />
           } />
 
-      <Route path="/menu/customize-pizza/:id" element={
+          <Route path="/menu/customize-pizza/:id" element={
             isAuthenticated ? <PizzaCustomization /> : <Navigate to="/" />
           } />
 
           <Route path="/cart" element={
               isAuthenticated ? <Cart /> : <Navigate to="/" />
           } />
+
+          <Route path="/checkout" element={
+              isAuthenticated ? <Checkout /> : <Navigate to="/" />
+          } />:
 
           {/* Catch-all Route */}
           <Route path="*" element={<Navigate to="/" />} />
