@@ -1,10 +1,12 @@
 # routes/customer_routes.py
 from flask import Blueprint, jsonify, request, session
-from models.database import Menu, CustomerOrders, CustomerPersonalInformation, SubOrder, OrderedIngredient, Ingredient, Cart, CartItem
+from models.database import Menu, CustomerOrders, CustomerPersonalInformation, SubOrder, OrderedIngredient, Ingredient, Cart, CartItem, DeliveryDriver, Delivery
 from datetime import datetime
 from models import db
 import traceback
 import bcrypt
+from sqlalchemy import func
+from datetime import timedelta
 
 customer_bp = Blueprint('customer_bp', __name__)
 
@@ -141,39 +143,69 @@ def place_order():
         if not cart or not cart.items:
             return jsonify({'error': 'Cart is empty'}), 400
 
-        # Create a new customer order
+        # Calculate total cost of the order
         total_cost = sum(item.total_price for item in cart.items)
+
+        # Create a new customer order
         new_order = CustomerOrders(
             customer_id=user_id,
             total_cost=total_cost,
             ordered_at=datetime.now(),
             status='Pending',
-            delivery_eta=None  # You can calculate this later
+            delivery_eta=None  # Will be calculated later
         )
         db.session.add(new_order)
         db.session.flush()  # Get the order.id
 
-        # Create sub-orders and clear the cart
+        # Create sub-orders for each cart item
         for cart_item in cart.items:
             sub_order = SubOrder(
                 order_id=new_order.id,
                 item_id=cart_item.menu_id
             )
             db.session.add(sub_order)
-            db.session.delete(cart_item)  # Remove the item from the cart
 
+        # Assign a driver with the fewest deliveries
+        driver = DeliveryDriver.query.outerjoin(Delivery).group_by(DeliveryDriver.id).order_by(func.count(Delivery.id)).first()
+
+        if not driver:
+            return jsonify({'error': 'No drivers available'}), 400
+
+        # Calculate delivery ETA (e.g., 20 minutes + 5 minutes for each order the driver already has)
+        driver_orders_count = Delivery.query.filter_by(delivered_by=driver.id).count()
+        eta_minutes = 20 + (driver_orders_count * 5)
+        delivery_eta = datetime.now() + timedelta(minutes=eta_minutes)
+
+        # Create a delivery entry for the order
+        delivery = Delivery(
+            delivered_by=driver.id,
+            order_id=new_order.id,
+            assigned_at=datetime.now(),
+            pizza_count=len(cart.items)
+        )
+        db.session.add(delivery)
+
+        # Update the order with the calculated delivery ETA
+        new_order.delivery_eta = delivery_eta
+
+        # Clear the user's cart
         for item in cart.items:
             db.session.delete(item)
 
-        # Commit everything and return the order info
+        # Commit the transaction
         db.session.commit()
 
+        formatted_eta = delivery_eta.strftime('%d/%m/%Y %H:%M')
+
+        # Return the order details
         return jsonify({
             'message': 'Order placed successfully',
             'order_id': new_order.id,
             'total_cost': new_order.total_cost,
-            'ordered_at': new_order.ordered_at
+            'ordered_at': new_order.ordered_at.strftime('%d/%m/%Y %H:%M'),
+            'delivery_eta': formatted_eta,
         }), 201
+
     except Exception as e:
         print(f"Error placing order: {e}")
         return jsonify({'error': 'Internal Server Error'}), 500

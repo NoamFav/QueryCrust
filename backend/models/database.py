@@ -99,9 +99,8 @@ class DeliveryDriver(db.Model):
 
     deliveries = relationship('Delivery', back_populates='driver')
 
-    def __init__(self, delivery_area, last_delivery):
+    def __init__(self, delivery_area):
         self.delivery_area = delivery_area
-        self.last_delivery = last_delivery
 
 class Discounts(db.Model):
     __tablename__ = 'discounts'

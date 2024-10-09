@@ -1,7 +1,7 @@
 # db_seed.py
 from app import create_app
 from models import db
-from models.database import Menu, Ingredient, PizzaIngredient
+from models.database import Menu, Ingredient, PizzaIngredient, DeliveryDriver
 from sqlalchemy.orm import sessionmaker
 
 app = create_app()
@@ -511,5 +511,19 @@ with app.app_context():
             session.add(extra)
 
     session.commit()
+
+    drivers_data = [
+            {'delivery_area' : 'North'},
+            {'delivery_area' : 'South'},
+            {'delivery_area' : 'East'},
+            {'delivery_area' : 'West'},
+            {'delivery_area' : 'Central'},
+    ]
+    for driver_data in drivers_data:
+        existing_driver = session.query(DeliveryDriver).filter_by(delivery_area=driver_data['delivery_area']).first()
+        if existing_driver is None:
+            driver = DeliveryDriver(**driver_data)
+            session.add(driver)
+
 
     print("Database seeded successfully with pizzas, drinks, desserts, and extras!")
