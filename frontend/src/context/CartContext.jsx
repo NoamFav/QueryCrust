@@ -7,23 +7,36 @@ export const CartContext = createContext();
 // Custom hook for accessing cart context
 export const useCart = () => useContext(CartContext);
 
-export const CartProvider = ({ children }) => {
+export const CartProvider = ({ children, isAuthenticated}) => {
   const [cartItems, setCartItems] = useState([]);
 
   // Fetch cart items from backend on mount
   useEffect(() => {
-    fetch('http://localhost:5001/api/customer/cart', { 
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
+    if (isAuthenticated) {
+      fetch('http://localhost:5001/api/customer/cart', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
       .then(response => response.json())
-      .then(data => setCartItems(data))
-      .catch(error => console.error('Error fetching cart items:', error));
-  }, []);
+      .then(data => {
+        setCartItems(data); // Set cart items after fetching
+        console.log('Cart fetched:', data);
+      })
+      .catch(err => {
+        console.error('Error fetching cart:', err);
+      });
+    } else {
+      setCartItems([]); // Clear cart when not authenticated
+    }
+  }, [isAuthenticated]);
 
   const addToCart = (menuId, quantity = 1, customizations = []) => {
+    if (!isAuthenticated) {
+        return;
+    }
     console.log(`Sending addToCart with menuId: ${menuId}, quantity: ${quantity}, customizations:`, customizations);
     fetch('http://localhost:5001/api/customer/cart/add', {
       method: 'POST',
@@ -56,6 +69,9 @@ export const CartProvider = ({ children }) => {
   };
 
   const removeFromCart = (cartItemId) => {
+      if (!isAuthenticated) {
+        return;
+      }
     fetch('http://localhost:5001/api/customer/cart/remove', {
       method: 'POST',
       credentials: 'include',

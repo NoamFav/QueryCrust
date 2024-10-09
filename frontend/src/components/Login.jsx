@@ -13,6 +13,7 @@ const Login = ({ setIsAuthenticated }) => {
 
         fetch('http://localhost:5001/api/customer/login', {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
             },

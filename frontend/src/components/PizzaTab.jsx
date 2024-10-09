@@ -6,7 +6,12 @@ const PizzaTab = () => {
   const [pizzaItems, setPizzaItems] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:5001/api/customer/menu?category=pizza')
+    fetch('http://localhost:5001/api/customer/menu?category=pizza', {
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
       .then(response => response.json())
       .then(data => setPizzaItems(data))
       .catch(error => console.error('Error fetching pizza items:', error));

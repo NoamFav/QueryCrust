@@ -14,7 +14,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   return (
-  <CartProvider>
+  <CartProvider isAuthenticated={isAuthenticated}>
     <Router>
       <div>
         {/* If authenticated, show the Navbar */}

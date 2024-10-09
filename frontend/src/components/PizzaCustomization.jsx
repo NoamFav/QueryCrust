@@ -13,13 +13,23 @@ const PizzaCustomization = () => {
 
   useEffect(() => {
     // Fetch the pizza item
-    fetch(`http://localhost:5001/api/customer/menu/${id}`)
+    fetch(`http://localhost:5001/api/customer/menu/${id}`, {
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
       .then(response => response.json())
       .then(data => setPizzaItem(data))
       .catch(error => console.error('Error fetching pizza item:', error));
 
     // Fetch available ingredients
-    fetch('http://localhost:5001/api/customer/ingredients')
+    fetch('http://localhost:5001/api/customer/ingredients', {
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
       .then(response => response.json())
       .then(data => setIngredients(data))
       .catch(error => console.error('Error fetching ingredients:', error));

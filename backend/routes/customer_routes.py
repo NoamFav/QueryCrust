@@ -29,7 +29,22 @@ def login():
     if not bcrypt.checkpw(password.encode('utf-8'), hashed_password):
         return jsonify({'error': 'Invalid password'}), 401
 
-    return jsonify({'message': 'Login successful', 'user_id': user.id})
+    # Save user info in session
+    session['user_id'] = user.id
+
+    # Check if the user has a cart; if yes, set it to the session
+    if user.cart:
+        session['cart_id'] = user.cart.id
+    else:
+        # Create a cart for the user if they don't have one
+        cart = Cart(customer_id=user.id)
+        db.session.add(cart)
+        db.session.commit()
+        session['cart_id'] = cart.id
+
+    get_or_create_cart()
+
+    return jsonify({'message': 'Login successful', 'user_id': user.id, 'cart_id': session['cart_id']})
 
 @customer_bp.route('/signin', methods=['POST'])
 def register():
@@ -62,6 +77,16 @@ def register():
     )
     db.session.add(new_user)
     db.session.commit()
+
+    # Create a cart for the new user
+    cart = Cart(customer_id=new_user.id)
+    db.session.add(cart)
+    db.session.commit()
+
+    # Store the user and cart in the session
+    session['user_id'] = new_user.id
+    session['cart_id'] = cart.id
+
     return jsonify({
     'message': 'User created successfully',
     'user_id': new_user.id,
@@ -182,7 +207,11 @@ def place_order():
 
 @customer_bp.route('/cart', methods=['GET'])
 def get_cart():
+    print(f"Session data at cart fetch: {dict(session)}")  # Log session data
     cart = get_or_create_cart()
+    if not cart:
+        return jsonify({'error': 'Cart not found'}), 404
+    
     cart_items = [
         {
             'id': item.id,
@@ -199,6 +228,7 @@ def get_cart():
 
 @customer_bp.route('/cart/add', methods=['POST'])
 def add_to_cart():
+    print("Session data at cart add:", dict(session))  # Debug line
     try:
         data = request.get_json()
         menu_id = data.get('menu_id')
@@ -217,6 +247,7 @@ def add_to_cart():
             return jsonify({'error': 'Menu item not found'}), 404
 
         cart = get_or_create_cart()
+        assert cart, 'Cart not found'
 
         # Check if item already exists in cart
         cart_item = CartItem.query.filter_by(cart_id=cart.id, menu_id=menu_id).first()
@@ -256,14 +287,28 @@ def remove_from_cart():
     return jsonify({'message': 'Item removed from cart'})
 
 def get_or_create_cart():
-    cart_id = session.get('cart_id')
-    if cart_id:
-        cart = Cart.query.get(cart_id)
-        if cart:
+    user_id = session.get('user_id')
+    
+    if not user_id:
+        print("No user_id found in session")
+        return None
+
+    print(f"Retrieving cart for user_id: {user_id}")
+    cart = Cart.query.filter_by(customer_id=user_id).first()
+
+    if cart:
+        print(f"Cart found for user_id {user_id}: {cart.id}")
+        session['cart_id'] = cart.id
+        return cart
+    else:
+        print(f"No cart found for user_id {user_id}, creating a new cart.")
+        try:
+            cart = Cart(customer_id=user_id)
+            db.session.add(cart)
+            db.session.commit()
+            session['cart_id'] = cart.id
+            print(f"New cart created for user_id {user_id}")
             return cart
-    # Create a new cart
-    cart = Cart()
-    db.session.add(cart)
-    db.session.commit()
-    session['cart_id'] = cart.id
-    return cart
+        except Exception as e:
+            print(f"Error creating a new cart for user_id {user_id}: {e}")
+            return None

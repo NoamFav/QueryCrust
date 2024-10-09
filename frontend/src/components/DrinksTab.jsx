@@ -6,7 +6,12 @@ const DrinksTab = () => {
   const [drinkItems, setDrinkItems] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:5001/api/customer/menu?category=drink')
+    fetch('http://localhost:5001/api/customer/menu?category=drink', {
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
       .then(response => response.json())
       .then(data => setDrinkItems(data))
       .catch(error => console.error('Error fetching drinks items:', error));

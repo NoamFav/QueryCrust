@@ -40,6 +40,7 @@ const Register = () => {
         // Assuming backend route is '/api/customer/signin'
         fetch('http://localhost:5001/api/customer/signin', {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
             },

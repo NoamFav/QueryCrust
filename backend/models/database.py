@@ -20,6 +20,7 @@ class CustomerPersonalInformation(db.Model):
     email = db.Column(db.String(50))
 
     orders = relationship('CustomerOrders')
+    cart = relationship('Cart', backref='customer', uselist=False)
 
     def __init__(self, address, birthday, phone_number, gender, previous_orders, age, name, email, password):
         self.address = address
@@ -249,6 +250,9 @@ class Cart(db.Model):
     customer_id = db.Column(db.Integer, db.ForeignKey('customer_personal_information.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.now)
     items = db.relationship('CartItem', backref='cart', lazy=True)
+
+    def __init__(self, customer_id):
+        self.customer_id = customer_id
 
 class CartItem(db.Model):
     __tablename__ = 'cart_item'
