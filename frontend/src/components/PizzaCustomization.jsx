@@ -1,14 +1,14 @@
 // src/components/PizzaCustomization.jsx
-import React, { useEffect, useState, useContext } from 'react'; // Import useContext
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useCart } from '../context/CartContext'; // Import useCart
+import { useCart } from '../context/CartContext';
 
 const PizzaCustomization = () => {
   const { id } = useParams();
   const [pizzaItem, setPizzaItem] = useState(null);
   const [ingredients, setIngredients] = useState([]);
   const [selectedIngredients, setSelectedIngredients] = useState([]);
-  const { addToCart } = useCart(); // Use useCart hook
+  const { addToCart } = useCart();
 
   useEffect(() => {
     // Fetch the pizza item
@@ -47,31 +47,31 @@ const PizzaCustomization = () => {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">Customize Your {pizzaItem.name}</h2>
-      <div>
-        <h3 className="text-xl font-semibold mb-2">Select Ingredients:</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+    <div className="container mx-auto p-6 bg-gray-100 min-h-screen">
+      <h2 className="text-3xl font-bold mb-6 text-center text-gray-900">Customize Your {pizzaItem.name}</h2>
+      <div className="bg-white p-6 rounded-lg shadow-lg">
+        <h3 className="text-xl font-semibold mb-4 text-gray-800">Select Ingredients:</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {ingredients.map(ingredient => (
-            <label key={ingredient.id} className="flex items-center">
+            <label key={ingredient.id} className="flex items-center text-gray-700 bg-gray-50 p-2 rounded-lg shadow-sm">
               <input
                 type="checkbox"
                 value={ingredient.id}
                 checked={selectedIngredients.includes(ingredient.id)}
                 onChange={() => handleIngredientChange(ingredient.id)}
-                className="mr-2"
+                className="mr-3 accent-green-500"
               />
-              {ingredient.name} (+${ingredient.price.toFixed(2)})
+              <span>{ingredient.name} (+${ingredient.price.toFixed(2)})</span>
             </label>
           ))}
         </div>
+        <button
+          className="w-full mt-6 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600 transition duration-200"
+          onClick={handleAddToCart}
+        >
+          Add to Cart
+        </button>
       </div>
-      <button
-        className="bg-green-500 text-white px-4 py-2 rounded mt-4"
-        onClick={handleAddToCart}
-      >
-        Add to Cart
-      </button>
     </div>
   );
 };

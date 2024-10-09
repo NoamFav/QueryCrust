@@ -24,34 +24,42 @@ const CategoryTabs = () => {
   };
 
   return (
-    <div>
-      <nav className="flex justify-center bg-gray-100">
+    <div className="pt-20">
+      <nav className="flex justify-center bg-gray-100 shadow-md rounded-lg p-4 mb-6 space-x-8">
         <button
-          className={`px-4 py-2 ${activeTab === 'Pizza' ? 'text-blue-500 border-b-2 border-blue-500' : ''}`}
+          className={`px-6 py-2 font-semibold transition-colors duration-200 ${
+            activeTab === 'Pizza' ? 'text-blue-500 border-b-4 border-blue-500' : 'text-gray-600 hover:text-blue-500'
+          }`}
           onClick={() => setActiveTab('Pizza')}
         >
           Pizza
         </button>
         <button
-          className={`px-4 py-2 ${activeTab === 'Desserts' ? 'text-blue-500 border-b-2 border-blue-500' : ''}`}
+          className={`px-6 py-2 font-semibold transition-colors duration-200 ${
+            activeTab === 'Desserts' ? 'text-blue-500 border-b-4 border-blue-500' : 'text-gray-600 hover:text-blue-500'
+          }`}
           onClick={() => setActiveTab('Desserts')}
         >
           Desserts
         </button>
         <button
-          className={`px-4 py-2 ${activeTab === 'Drinks' ? 'text-blue-500 border-b-2 border-blue-500' : ''}`}
+          className={`px-6 py-2 font-semibold transition-colors duration-200 ${
+            activeTab === 'Drinks' ? 'text-blue-500 border-b-4 border-blue-500' : 'text-gray-600 hover:text-blue-500'
+          }`}
           onClick={() => setActiveTab('Drinks')}
         >
           Drinks
         </button>
         <button
-          className={`px-4 py-2 ${activeTab === 'Extras' ? 'text-blue-500 border-b-2 border-blue-500' : ''}`}
+          className={`px-6 py-2 font-semibold transition-colors duration-200 ${
+            activeTab === 'Extras' ? 'text-blue-500 border-b-4 border-blue-500' : 'text-gray-600 hover:text-blue-500'
+          }`}
           onClick={() => setActiveTab('Extras')}
         >
           Extras
         </button>
       </nav>
-      <div className="p-4">{renderTabContent()}</div>
+      <div className="p-6 bg-white rounded-lg shadow-lg">{renderTabContent()}</div>
     </div>
   );
 };

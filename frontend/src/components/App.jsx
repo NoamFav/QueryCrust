@@ -7,6 +7,7 @@ import Cart from './Cart'; // Example of your main app pages
 import NavBar from './NavBar'; // Navigation Bar
 import CategoryTabs from './CategoryTabs'; // Main content page
 import { CartProvider } from '../context/CartContext'; // Cart Context
+import PizzaCustomization from './PizzaCustomization';
 
 function App() {
   // State to track if the user is authenticated
@@ -33,6 +34,10 @@ function App() {
           {/* Main App Pages - Protected Routes */}
           <Route path="/menu" element={
               isAuthenticated ? <CategoryTabs /> : <Navigate to="/" />
+          } />
+
+      <Route path="/menu/customize-pizza/:id" element={
+            isAuthenticated ? <PizzaCustomization /> : <Navigate to="/" />
           } />
 
           <Route path="/cart" element={
