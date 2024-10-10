@@ -18,11 +18,12 @@ class CustomerPersonalInformation(db.Model):
     age = db.Column(db.Integer)
     name = db.Column(db.String(50))
     email = db.Column(db.String(50))
+    is_admin = db.Column(db.Boolean, default=False)
 
     orders = relationship('CustomerOrders')
     cart = relationship('Cart', backref='customer', uselist=False)
 
-    def __init__(self, address, birthday, phone_number, gender, previous_orders, age, name, email, password):
+    def __init__(self, address, birthday, phone_number, gender, previous_orders, age, name, email, password, is_admin=False):
         self.address = address
         self.birthday = birthday
         self.phone_number = phone_number
@@ -32,6 +33,7 @@ class CustomerPersonalInformation(db.Model):
         self.name = name
         self.email = email
         self.password = password
+        self.is_admin = is_admin
 
 
 @event.listens_for(CustomerPersonalInformation, 'before_insert')

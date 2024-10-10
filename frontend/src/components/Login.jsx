@@ -3,7 +3,7 @@
 import React, { useState, useEffect} from 'react';
 import { Link } from 'react-router-dom';
 
-const Login = ({ setIsAuthenticated }) => {
+const Login = ({ setIsAuthenticated, setIsAdmin }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
@@ -28,7 +28,8 @@ const Login = ({ setIsAuthenticated }) => {
         })
         .then(data => {
             setIsAuthenticated(true); // Set the user as authenticated
-            console.log(data.message);
+            setIsAdmin(data.is_admin); // Set the user as an admin
+            console.log(data.message + ' ' + data.is_admin);
             // TODO: Handle successful login (e.g., store user data, redirect)
         })
         .catch(error => {

@@ -3,10 +3,13 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useOrder } from '../context/OrderContext';
+import { useAdminOrder } from '../context/AdminOrderContext';
 
-const Navbar = () => {
+const Navbar = ({isAdmin}) => {
   const { cartItems } = useCart();
   const { orders } = useOrder();
+  const { adminOrders } = useAdminOrder();
+  
   const totalQuantity = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
@@ -31,13 +34,25 @@ const Navbar = () => {
             Checkout
           </Link>
           <Link to="/orders" className="relative text-white hover:text-gray-300 transition duration-200">
-            Orders
+            My Orders
             {orders.length > 0 && (
               <span className="absolute -top-2 -right-3 bg-red-500 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
                 {orders.length}
               </span>
             )}
           </Link>
+              {isAdmin && (
+              <div className="relative"> {/* Wrap Admin link in a relative div */}
+                <Link to="/admin" className="text-white hover:text-gray-300 transition duration-200">
+                  Admin
+                  {adminOrders.length > 0 && (
+                    <span className="absolute -top-2 -right-3 bg-red-500 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
+                      {adminOrders.length}
+                    </span>
+                  )}
+                </Link>
+              </div>
+            )}
         </div>
       </div>
     </nav>

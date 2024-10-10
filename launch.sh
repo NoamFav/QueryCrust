@@ -1,5 +1,17 @@
 #!/bin/bash
 
+# Function to stop both Flask and npm
+cleanup() {
+  echo "Stopping Flask and npm..."
+  kill $FLASK_PID 2>/dev/null
+  kill $NPM_PID 2>/dev/null
+  wait $FLASK_PID 2>/dev/null
+  wait $NPM_PID 2>/dev/null
+}
+
+# Trap SIGINT and SIGTERM for graceful shutdown
+trap cleanup SIGINT SIGTERM
+
 # Navigate to the backend directory and start Flask
 echo "Starting Flask backend..."
 cd backend
@@ -14,8 +26,6 @@ cd ../frontend
 npm start &
 NPM_PID=$!  # Capture npm process ID
 
-# Trap the script termination (Ctrl+C) to stop Flask and npm processes
-trap "echo 'Stopping Flask and npm...'; kill $FLASK_PID; kill $NPM_PID" SIGINT
-
 # Wait for both processes to finish
-wait
+wait $FLASK_PID
+wait $NPM_PID

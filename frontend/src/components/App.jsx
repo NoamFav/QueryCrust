@@ -8,26 +8,30 @@ import NavBar from './NavBar'; // Navigation Bar
 import CategoryTabs from './CategoryTabs'; // Main content page
 import { CartProvider } from '../context/CartContext'; // Cart Context
 import { OrderProvider } from '../context/OrderContext'; // Order Context
+import { AdminOrderProvider } from '../context/AdminOrderContext'; // Admin Context
 import PizzaCustomization from './PizzaCustomization';
 import Checkout from './Checkout';
 import Order from './Order';
+import Admin from './AdminTab';
 
 function App() {
   // State to track if the user is authenticated
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   return (
   <CartProvider isAuthenticated={isAuthenticated}>
       <OrderProvider isAuthenticated={isAuthenticated}>
+        <AdminOrderProvider isAuthenticated={isAuthenticated}>
         <Router>
           <div>
             {/* If authenticated, show the Navbar */}
-            {isAuthenticated && <NavBar />}
+            {isAuthenticated && <NavBar  isAdmin={isAdmin} />}
             
             <Routes>
               {/* Login Route */}
               <Route path="/" element={
-                isAuthenticated ? <Navigate to="/menu" /> : <Login setIsAuthenticated={setIsAuthenticated} />
+                  isAuthenticated ? <Navigate to="/menu" /> : <Login setIsAuthenticated={setIsAuthenticated} setIsAdmin={setIsAdmin}/>
               } />
 
               {/* Register Route */}
@@ -52,8 +56,12 @@ function App() {
                   isAuthenticated ? <Checkout /> : <Navigate to="/" />
               } />
                 
-              <Route path="/orders" element={
+              <Route path="/orders" isAdmin={isAdmin} element={
                   isAuthenticated ? <Order /> : <Navigate to="/" />
+              } />
+
+              <Route path="/admin" element={
+                  isAuthenticated && isAdmin ? <Admin /> : <Navigate to="/" />
               } />
 
               {/* Catch-all Route */}
@@ -61,6 +69,7 @@ function App() {
             </Routes>
           </div>
         </Router>
+        </AdminOrderProvider>
       </OrderProvider>
   </CartProvider>
   );

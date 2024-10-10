@@ -26,7 +26,6 @@ const Order = () => {
         setUpdatedOrders(newOrders);  // Set orders immediately after they are fetched
     }, [orders]);
 
-    // Optional: Update order state every 10 seconds to check if an order can still be canceled
     useEffect(() => {
         const interval = setInterval(() => {
             const newOrders = orders.map((order) => ({

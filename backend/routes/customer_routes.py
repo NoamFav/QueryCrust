@@ -1,6 +1,6 @@
 # routes/customer_routes.py
 from flask import Blueprint, jsonify, request, session
-from models.database import Menu, CustomerOrders, CustomerPersonalInformation, SubOrder, OrderedIngredient, Ingredient, Cart, CartItem, DeliveryDriver, Delivery
+from models.database import Menu, CustomerOrders, CustomerPersonalInformation, SubOrder, Ingredient, OrderedIngredient, Cart, CartItem, DeliveryDriver, Delivery
 from datetime import datetime
 from models import db
 import traceback
@@ -34,19 +34,22 @@ def login():
     # Save user info in session
     session['user_id'] = user.id
 
-    # Check if the user has a cart; if yes, set it to the session
+    # Set cart info
     if user.cart:
         session['cart_id'] = user.cart.id
     else:
-        # Create a cart for the user if they don't have one
         cart = Cart(customer_id=user.id)
         db.session.add(cart)
         db.session.commit()
         session['cart_id'] = cart.id
 
-    get_or_create_cart()
-
-    return jsonify({'message': 'Login successful', 'user_id': user.id, 'cart_id': session['cart_id']})
+    # Return user admin status along with other details
+    return jsonify({
+        'message': 'Login successful', 
+        'user_id': user.id, 
+        'cart_id': session['cart_id'], 
+        'is_admin': user.is_admin
+    })
 
 @customer_bp.route('/signin', methods=['POST'])
 def register():
@@ -157,21 +160,31 @@ def place_order():
         db.session.add(new_order)
         db.session.flush()  # Get the order.id
 
-        # Create sub-orders for each cart item
+        # Create sub-orders for each cart item and include ingredients
         for cart_item in cart.items:
             sub_order = SubOrder(
                 order_id=new_order.id,
-                item_id=cart_item.menu_id
+                item_id=cart_item.menu_id,
             )
             db.session.add(sub_order)
+            db.session.flush()  # Get the sub_order.id now
 
+            # Add ordered ingredients
+            if cart_item.customizations:
+                for customization in cart_item.customizations:
+                    ordered_ingredient = OrderedIngredient(
+                        sub_order_id=sub_order.id,  # Set the correct sub_order_id
+                        ingredient_id=customization['ingredient_id'],
+                        action=customization['action']  # e.g., 'add' or 'remove'
+                    )
+                    db.session.add(ordered_ingredient)
         # Assign a driver with the fewest deliveries
         driver = DeliveryDriver.query.outerjoin(Delivery).group_by(DeliveryDriver.id).order_by(func.count(Delivery.id)).first()
 
         if not driver:
             return jsonify({'error': 'No drivers available'}), 400
 
-        # Calculate delivery ETA (e.g., 20 minutes + 5 minutes for each order the driver already has)
+        # Calculate delivery ETA
         driver_orders_count = Delivery.query.filter_by(delivered_by=driver.id).count()
         eta_minutes = 20 + (driver_orders_count * 5)
         delivery_eta = datetime.now() + timedelta(minutes=eta_minutes)
@@ -208,6 +221,7 @@ def place_order():
 
     except Exception as e:
         print(f"Error placing order: {e}")
+        db.session.rollback()  # Rollback the session on error
         return jsonify({'error': 'Internal Server Error'}), 500
 
 @customer_bp.route('/orders', methods=['GET'])

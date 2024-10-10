@@ -1,6 +1,6 @@
 # routes/admin_routes.py
 from flask import Blueprint, jsonify, request
-from models.database import Menu, CustomerOrders, DeliveryDriver
+from models.database import Menu, CustomerOrders, DeliveryDriver, OrderedIngredient
 from models import db
 
 admin_bp = Blueprint('admin_bp', __name__)
@@ -23,9 +23,25 @@ def get_all_orders():
             'total_cost': order.total_cost,
             'status': order.status,
             'ordered_at': order.ordered_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'items': get_item_from_order(order),
         }
         order_list.append(order_info)
     return jsonify(order_list)
+
+def get_item_from_order(order):
+    item_list = []
+    for sub_order in order.sub_orders:
+        # Query the OrderedIngredient based on sub_order.id
+        ingredients = OrderedIngredient.query.filter_by(sub_order_id=sub_order.id).all()
+        ingredient_names = [ingredient.ingredient.name for ingredient in ingredients]
+
+        item_info = {
+            'item_id': sub_order.item_id,
+            'name': sub_order.menu_item.name,
+            'ingredients': ingredient_names,  # Use the names of the ingredients
+        }
+        item_list.append(item_info)
+    return item_list
 
 # Add a new menu item
 @admin_bp.route('/menu', methods=['POST'])
@@ -126,11 +142,22 @@ def add_driver():
     if not delivery_area:
         return jsonify({'error': 'Missing required fields'}), 400
 
-    new_driver = DeliveryDriver(delivery_area=delivery_area, last_delivery=None)
+    new_driver = DeliveryDriver(delivery_area=delivery_area)
     db.session.add(new_driver)
     db.session.commit()
 
     return jsonify({'message': 'Delivery driver added', 'driver_id': new_driver.id}), 201
+
+# Update a delivery driver
+@admin_bp.route('/drivers/<int:driver_id>', methods=['PUT'])
+def update_driver(driver_id):
+    data = request.get_json()
+    driver = DeliveryDriver.query.get_or_404(driver_id)
+
+    driver.delivery_area = data.get('delivery_area', driver.delivery_area)
+
+    db.session.commit()
+    return jsonify({'message': 'Delivery driver updated'})
 
 # Delete a delivery driver
 @admin_bp.route('/drivers/<int:driver_id>', methods=['DELETE'])
