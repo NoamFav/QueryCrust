@@ -18,7 +18,11 @@ const Navbar = ({isAdmin}) => {
         <div className="text-white text-2xl font-bold">
           QueryCrust
         </div>
+            
         <div className="flex items-center space-x-6">
+            <Link to="/personal" className="text-white hover:text-gray-300 transition duration-200">
+            Personal Details
+            </Link>
           <Link to="/menu" className="text-white hover:text-gray-300 transition duration-200">
             Menu
           </Link>

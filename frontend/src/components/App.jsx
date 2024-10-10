@@ -13,6 +13,7 @@ import PizzaCustomization from './PizzaCustomization';
 import Checkout from './Checkout';
 import Order from './Order';
 import Admin from './AdminTab';
+import PersonalDetails from './PersonalInfo';
 
 function App() {
   // State to track if the user is authenticated
@@ -37,6 +38,10 @@ function App() {
               {/* Register Route */}
               <Route path="/register" element={
                 isAuthenticated ? <Navigate to="/main" /> : <Register />
+              } />
+
+              <Route path="/personal" element={
+                  isAuthenticated ? <PersonalDetails /> : <Navigate to="/" />
               } />
 
               {/* Main App Pages - Protected Routes */}

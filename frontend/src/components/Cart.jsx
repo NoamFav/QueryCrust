@@ -49,7 +49,7 @@ const Cart = () => {
                     )}                
                   </div>
                   <div className="flex flex-col items-end">
-                    <p className="text-lg font-semibold">Total: ${item.total_price.toFixed(2)}</p>
+                    <p className="text-lg font-semibold">Total: ${(item.total_price).toFixed(2)}</p>
                     <button
                       onClick={() => removeFromCart(item.id)}
                       className="mt-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition ease-in-out duration-200"

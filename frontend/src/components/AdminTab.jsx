@@ -95,9 +95,9 @@ const AdminTab = () => {
                                 </button>
                                 <button 
                                     className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"
-                                    onClick={() => handleStatusUpdate(order.order_id, 'Error')}
+                                    onClick={() => handleStatusUpdate(order.order_id, 'Cancelled')}
                                 >
-                                    Error
+                                    Cancelled
                                 </button>
                             </div>
                         </li>

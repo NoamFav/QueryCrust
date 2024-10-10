@@ -22,24 +22,27 @@ const MenuItem = ({ item, category, fetchMenuItems, isAdmin }) => {
 
   // Handle removing the item
   const handleRemove = () => {
-    fetch(`http://localhost:5001/api/admin/menu/${item.id}`, {
-      method: 'DELETE',
-      credentials: 'include',  // Include credentials
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    })
-      .then(response => {
-        if (response.ok) {
-          fetchMenuItems();  // Re-fetch the updated menu after deletion
-        } else {
-          console.error('Failed to remove menu item');
+      fetch(`http://localhost:5001/api/admin/menu/${item.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
         }
       })
-      .catch(error => {
-        console.error('Error removing menu item:', error);
-      });
-  };
+        .then(response => {
+          if (!response.ok) {
+            return response.json().then(data => {
+              // Use the detailed error message returned from the backend
+              throw new Error(data.error);
+            });
+          }
+          fetchMenuItems();  // Re-fetch the updated menu after deletion
+        })
+        .catch(error => {
+          console.error('Failed to remove menu item:', error.message);
+          alert(`Error: ${error.message}`);  // Display a clear error message to the user
+        });
+    };
 
   return (
       <div className="bg-white shadow-lg rounded-lg p-6 hover:shadow-xl transition-shadow duration-300 ease-in-out">

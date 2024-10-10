@@ -106,6 +106,23 @@ def register():
     'password': password
     }), 201
 
+@customer_bp.route('/details', methods=['GET'])
+def get_customer():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'User not authenticated'}), 401
+
+    user = CustomerPersonalInformation.query.get_or_404(user_id)
+    return jsonify({
+        'user_id': user.id,
+        'address': user.address,
+        'phone_number': user.phone_number,
+        'name': user.name,
+        'email': user.email,
+        'birthday': user.birthday,
+        'gender': user.gender,
+        })
+
 @customer_bp.route('/menu', methods=['GET'])
 def get_menu():
     category = request.args.get('category')
@@ -147,7 +164,7 @@ def place_order():
             return jsonify({'error': 'Cart is empty'}), 400
 
         # Calculate total cost of the order
-        total_cost = sum(item.total_price for item in cart.items)
+        total_cost = sum(item.total_price * item.quantity for item in cart.items)
 
         # Create a new customer order
         new_order = CustomerOrders(
@@ -165,6 +182,7 @@ def place_order():
             sub_order = SubOrder(
                 order_id=new_order.id,
                 item_id=cart_item.menu_id,
+                quantity=cart_item.quantity
             )
             db.session.add(sub_order)
             db.session.flush()  # Get the sub_order.id now
@@ -317,7 +335,7 @@ def get_cart():
             'price': item.menu_item.price,
             'quantity': item.quantity,
             'customizations': item.customizations if item.customizations else [],
-            'total_price': item.total_price
+            'total_price': item.total_price * item.quantity
         }
         for item in cart.items
     ]
@@ -349,7 +367,8 @@ def add_to_cart():
         # Check if item already exists in cart
         cart_item = CartItem.query.filter_by(cart_id=cart.id, menu_id=menu_id).first()
         if cart_item:
-            cart_item.customizations = customizations   
+            cart_item.customizations = customizations
+            cart_item.quantity += quantity
         else:
             cart_item = CartItem(
                 cart_id=cart.id,

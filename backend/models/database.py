@@ -115,15 +115,17 @@ class SubOrder(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     item_id = db.Column(db.Integer, db.ForeignKey('menu.id'))
     order_id = db.Column(db.Integer, db.ForeignKey('customer_orders.id'))
+    quantity = db.Column(db.Integer, default=1)  # Add quantity field
 
     # links to be able to go from sub-order to order and vice versa
     order = relationship('CustomerOrders', back_populates='sub_orders')
     menu_item = relationship('Menu', back_populates="sub_orders")
     ingredients = relationship("OrderedIngredient", back_populates="customer_orders")
 
-    def __init__(self, item_id, order_id):
+    def __init__(self, item_id, order_id, quantity=1):
         self.item_id = item_id
         self.order_id = order_id
+        self.quantity = quantity
 
 
 class Menu(db.Model):

@@ -1,6 +1,6 @@
 # routes/admin_routes.py
 from flask import Blueprint, jsonify, request
-from models.database import Menu, CustomerOrders, DeliveryDriver, OrderedIngredient
+from models.database import Menu, CustomerOrders, DeliveryDriver, OrderedIngredient, SubOrder, CartItem
 from models import db
 
 admin_bp = Blueprint('admin_bp', __name__)
@@ -46,6 +46,7 @@ def get_item_from_order(order):
             'item_id': sub_order.item_id,
             'name': sub_order.menu_item.name,
             'ingredients': ingredient_details,
+            'quantity': sub_order.quantity,
         }
         item_list.append(item_info)
     return item_list
@@ -83,10 +84,26 @@ def update_menu_item(item_id):
 # Delete a menu item
 @admin_bp.route('/menu/<int:item_id>', methods=['DELETE'])
 def delete_menu_item(item_id):
+    # Check if the menu item is part of any active orders
+    active_sub_orders = SubOrder.query.filter_by(item_id=item_id).first()
+    active_cart_items = CartItem.query.filter_by(menu_id=item_id).first()
+    
+    if active_sub_orders:
+        return jsonify({
+            'error': f'Menu item {item_id} cannot be deleted because it is part of an active orders.'
+        }), 400
+
+    if active_cart_items:
+        return jsonify({
+            'error': f'Menu item {item_id} cannot be deleted because it is part of an active cart items.'
+        }), 400
+
+    # If no references found, proceed with deletion
     item = Menu.query.get_or_404(item_id)
     db.session.delete(item)
     db.session.commit()
-    return jsonify({'message': 'Menu item deleted'})
+
+    return jsonify({'message': 'Menu item deleted successfully'})
 
 # Update order status
 @admin_bp.route('/orders/<int:order_id>/status', methods=['PUT'])
@@ -129,14 +146,6 @@ def update_order_eta(order_id):
     order.delivery_eta = delivery_eta
     db.session.commit()
     return jsonify({'message': 'Order delivery ETA updated'})
-
-# Delete an order (for some reason)
-@admin_bp.route('/orders/<int:order_id>', methods=['DELETE'])
-def delete_order(order_id):
-    order = CustomerOrders.query.get_or_404(order_id)
-    db.session.delete(order)
-    db.session.commit()
-    return jsonify({'message': 'Order deleted from system (for some reason)'})
 
 # Get all delivery drivers
 @admin_bp.route('/drivers', methods=['GET'])
