@@ -2,9 +2,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useOrder } from '../context/OrderContext';
 
 const Navbar = () => {
   const { cartItems } = useCart();
+  const { orders } = useOrder();
   const totalQuantity = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
@@ -27,6 +29,14 @@ const Navbar = () => {
           </Link>
           <Link to="/checkout" className="text-white hover:text-gray-300 transition duration-200">
             Checkout
+          </Link>
+          <Link to="/orders" className="relative text-white hover:text-gray-300 transition duration-200">
+            Orders
+            {orders.length > 0 && (
+              <span className="absolute -top-2 -right-3 bg-red-500 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
+                {orders.length}
+              </span>
+            )}
           </Link>
         </div>
       </div>

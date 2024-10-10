@@ -56,11 +56,10 @@ class CustomerOrders(db.Model):
     delivery_eta = db.Column(db.DateTime)
     ordered_at = db.Column(db.DateTime)
     status = db.Column(db.String(10))
-    password = db.Column(db.String(30))
 
     customer = relationship('CustomerPersonalInformation', back_populates='orders')
     sub_orders = relationship('SubOrder', back_populates='order')
-    delivery = relationship('Delivery', back_populates='order')
+    delivery = relationship('Delivery', back_populates='order', uselist=False)
 
     def __init__(self, customer_id, total_cost, ordered_at, status, delivery_eta):
         self.customer_id = customer_id

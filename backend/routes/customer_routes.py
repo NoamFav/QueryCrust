@@ -210,6 +210,84 @@ def place_order():
         print(f"Error placing order: {e}")
         return jsonify({'error': 'Internal Server Error'}), 500
 
+@customer_bp.route('/orders', methods=['GET'])
+def get_order():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'User not authenticated'}), 401
+
+    orders = CustomerOrders.query.filter_by(customer_id=user_id).all()
+
+    orders.sort(key=lambda x: x.ordered_at, reverse=True)
+
+    for order in orders:
+        if order.status == 'Pending':
+            time_diff = datetime.now() - order.ordered_at
+            if time_diff.total_seconds() >= 300:
+                order.status = 'Cancelled'
+                db.session.commit()
+
+    order_list = [
+        {
+            'order_id': order.id,
+            'total_cost': order.total_cost,
+            'ordered_at': order.ordered_at.strftime('%d/%m/%Y %H:%M'),
+            'delivery_eta': order.delivery_eta.strftime('%d/%m/%Y %H:%M') if order.delivery_eta else None,
+            'status': order.status,
+            'delivery_driver': order.delivery.delivered_by
+        }
+        for order in orders
+    ]
+    return jsonify(order_list)
+
+@customer_bp.route('/orders/<int:order_id>', methods=['GET'])
+def get_order_details(order_id):
+    order = CustomerOrders.query.get_or_404(order_id)
+    sub_orders = SubOrder.query.filter_by(order_id=order_id).all()
+    order_items = [
+        {
+            'id': sub_order.item.id,
+            'name': sub_order.item.name,
+            'price': sub_order.item.price
+        }
+        for sub_order in sub_orders
+    ]
+    return jsonify({
+        'order_id': order.id,
+        'total_cost': order.total_cost,
+        'ordered_at': order.ordered_at.strftime('%d/%m/%Y %H:%M'),
+        'delivery_eta': order.delivery_eta.strftime('%d/%m/%Y %H:%M') if order.delivery_eta else None,
+        'status': order.status,
+        'items': order_items
+    })
+
+@customer_bp.route('/orders/<int:order_id>/cancel', methods=['DELETE'])
+def cancel_order(order_id):
+    order = CustomerOrders.query.get_or_404(order_id)
+
+    # If the order is 'Pending' and was placed less than 5 minutes ago, allow cancellation
+    if order.status == 'Pending':
+        time_diff = datetime.now() - order.ordered_at
+        if time_diff.total_seconds() < 300: 
+            order.status = 'Cancelled'
+            db.session.commit()
+            return jsonify({'message': 'Order cancelled successfully'}), 200
+        else:
+            return jsonify({'error': 'Order cannot be cancelled after 5 minutes'}), 400
+
+    # If the order is 'In Delivery', it cannot be cancelled
+    if order.status == 'In Delivery':
+        return jsonify({'error': 'Order is in delivery and cannot be cancelled'}), 400
+
+    # If the order is 'Delivered', allow deletion
+    if order.status == 'Delivered' or order.status == 'Cancelled':
+        db.session.delete(order)
+        db.session.commit()
+        return jsonify({'message': 'Order has been removed successfully'}), 200
+
+    # Otherwise, if the status is anything else, cancellation is not allowed
+    return jsonify({'error': 'Order cannot be cancelled'}), 400
+
 @customer_bp.route('/cart', methods=['GET'])
 def get_cart():
     print(f"Session data at cart fetch: {dict(session)}")  # Log session data

@@ -1,10 +1,12 @@
 // src/components/Checkout.jsx
 import React, { useContext, useState } from 'react';
 import { CartContext } from '../context/CartContext';
+import { OrderContext } from '../context/OrderContext';
 import { useNavigate } from 'react-router-dom';
 
 const Checkout = () => {
-  const { cartItems, setCartItems, fetchCartItems } = useContext(CartContext); // Access the cart context
+  const { cartItems, fetchCartItems } = useContext(CartContext); // Access the cart context
+  const { fetchOrders } = useContext(OrderContext); // Access the order context
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderDetails, setOrderDetails] = useState(null);
   const navigate = useNavigate();
@@ -25,6 +27,7 @@ const Checkout = () => {
         setOrderDetails(data);  // Store order details
         setOrderPlaced(true);   // Mark order as placed
         fetchCartItems();       // Explicitly re-fetch the cart after order
+        fetchOrders();          // Explicitly re-fetch the orders after order
       }
     })
     .catch(err => console.error('Error during checkout:', err));
