@@ -5,21 +5,21 @@ import DessertsTab from './DessertsTab';
 import DrinksTab from './DrinksTab';
 import ExtrasTab from './ExtrasTab';
 
-const CategoryTabs = () => {
+const CategoryTabs = ({isAdmin}) => {
   const [activeTab, setActiveTab] = useState('Pizza');
 
   const renderTabContent = () => {
     switch (activeTab) {
       case 'Pizza':
-        return <PizzaTab />;
+        return <PizzaTab isAdmin={isAdmin}/>;
       case 'Desserts':
-        return <DessertsTab />;
+        return <DessertsTab isAdmin={isAdmin} />;
       case 'Drinks':
-        return <DrinksTab />;
+        return <DrinksTab isAdmin={isAdmin} />;
       case 'Extras':
-        return <ExtrasTab />;
+        return <ExtrasTab isAdmin={isAdmin} />;
       default:
-        return <PizzaTab />;
+        return <PizzaTab isAdmin={isAdmin} />;
     }
   };
 

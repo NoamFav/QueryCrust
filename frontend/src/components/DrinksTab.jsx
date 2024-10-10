@@ -2,27 +2,32 @@
 import React, { useEffect, useState } from 'react';
 import MenuItem from './MenuItem';
 
-const DrinksTab = () => {
+const DrinksTab = ({isAdmin}) => {
   const [drinkItems, setDrinkItems] = useState([]);
 
-  useEffect(() => {
+  // Function to fetch drink items
+  const fetchDrinkItems = () => {
     fetch('http://localhost:5001/api/customer/menu?category=drink', {
-        credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      }
     })
       .then(response => response.json())
       .then(data => setDrinkItems(data))
-      .catch(error => console.error('Error fetching drinks items:', error));
+      .catch(error => console.error('Error fetching drink items:', error));
+  };
+
+  useEffect(() => {
+    fetchDrinkItems();  // Fetch drink items on component mount
   }, []);
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">Our Drinks</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {drinkItems.map(item => (
-          <MenuItem key={item.id} item={item} category="drink" />
+        {drinkItems.map(item => (
+          <MenuItem key={item.id} item={item} category="drink" fetchMenuItems={fetchDrinkItems} isAdmin={isAdmin} />
         ))}
       </div>
     </div>

@@ -14,31 +14,38 @@ def get_menu():
 
 @admin_bp.route('/orders', methods=['GET'])
 def get_all_orders():
-    orders = CustomerOrders.query.all()
+    orders = CustomerOrders.query.all()  # Fetch all orders
     order_list = []
     for order in orders:
+        customer = order.customer  # Get the customer associated with the order
+        delivery = order.delivery  # Get the delivery associated with the order
+        driver = delivery.driver if delivery else None  # Get the driver, if assigned
+
         order_info = {
             'order_id': order.id,
             'customer_id': order.customer_id,
+            'customer_name': customer.name,  # Assuming you have the 'name' field in 'customer'
+            'customer_address': customer.address,  # Assuming 'address' exists in 'customer'
             'total_cost': order.total_cost,
             'status': order.status,
             'ordered_at': order.ordered_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'driver_id': driver.id if driver else None,  # Assign driver ID if driver is assigned
             'items': get_item_from_order(order),
         }
         order_list.append(order_info)
+
     return jsonify(order_list)
 
 def get_item_from_order(order):
     item_list = []
     for sub_order in order.sub_orders:
-        # Query the OrderedIngredient based on sub_order.id
         ingredients = OrderedIngredient.query.filter_by(sub_order_id=sub_order.id).all()
-        ingredient_names = [ingredient.ingredient.name for ingredient in ingredients]
+        ingredient_details = [{'name': ingredient.ingredient.name, 'action': ingredient.action} for ingredient in ingredients]
 
         item_info = {
             'item_id': sub_order.item_id,
             'name': sub_order.menu_item.name,
-            'ingredients': ingredient_names,  # Use the names of the ingredients
+            'ingredients': ingredient_details,
         }
         item_list.append(item_info)
     return item_list
@@ -82,19 +89,31 @@ def delete_menu_item(item_id):
     return jsonify({'message': 'Menu item deleted'})
 
 # Update order status
-@admin_bp.route('/orders/<int:order_id>', methods=['PUT'])
+@admin_bp.route('/orders/<int:order_id>/status', methods=['PUT'])
 def update_order_status(order_id):
     data = request.get_json()
+
+    # Validate that 'status' is in the request data
+    status = data.get('status')
+    if not status:
+        return jsonify({'error': 'Status is required'}), 400
+
+    # Check if status is one of the valid options that match your UI
+    valid_statuses = ['Pending', 'In Preparation', 'In Delivery', 'Delivered', 'Cancelled']
+    if status not in valid_statuses:
+        return jsonify({'error': f'Invalid status. Must be one of {valid_statuses}'}), 400
+
+    # Get the order by ID, or return a 404 if not found
     order = CustomerOrders.query.get_or_404(order_id)
 
-    status = data.get('status')
-
-    if status not in ['Pending', 'Preparing', 'Out for delivery', 'Delivered']:
-        return jsonify({'error': 'Invalid status'}), 400
-
-    order.status = status
-    db.session.commit()
-    return jsonify({'message': 'Order status updated'})
+    # Update the order status
+    try:
+        order.status = status
+        db.session.commit()
+        return jsonify({'message': 'Order status updated', 'order_id': order_id, 'new_status': status}), 200
+    except Exception as e:
+        db.session.rollback()  # In case of error, roll back any changes
+        return jsonify({'error': f'An error occurred: {str(e)}'}), 500
 
 # Update order delivery ETA
 @admin_bp.route('/orders/<int:order_id>/eta', methods=['PUT'])

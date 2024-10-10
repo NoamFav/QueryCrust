@@ -41,7 +41,7 @@ function App() {
 
               {/* Main App Pages - Protected Routes */}
               <Route path="/menu" element={
-                  isAuthenticated ? <CategoryTabs /> : <Navigate to="/" />
+                  isAuthenticated ? <CategoryTabs  isAdmin={isAdmin}/> : <Navigate to="/" />
               } />
 
               <Route path="/menu/customize-pizza/:id" element={

@@ -57,7 +57,7 @@ class CustomerOrders(db.Model):
     total_cost = db.Column(db.Float)
     delivery_eta = db.Column(db.DateTime)
     ordered_at = db.Column(db.DateTime)
-    status = db.Column(db.String(10))
+    status = db.Column(db.String(25))
 
     customer = relationship('CustomerPersonalInformation', back_populates='orders')
     sub_orders = relationship('SubOrder', back_populates='order')
@@ -214,7 +214,7 @@ class PizzaIngredient(db.Model):
     __tablename__ = 'pizza_ingredient'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    menu_id = db.Column(db.Integer, db.ForeignKey('menu.id'))
+    menu_id = db.Column(db.Integer, db.ForeignKey('menu.id', ondelete='CASCADE'))
     ingredient_id = db.Column(db.Integer, db.ForeignKey('ingredient.id'))
 
 
