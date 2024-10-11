@@ -7,6 +7,7 @@ import traceback
 import bcrypt
 from sqlalchemy import func
 from datetime import timedelta
+from sqlalchemy import or_
 
 customer_bp = Blueprint('customer_bp', __name__)
 
@@ -157,6 +158,21 @@ def get_ingredients():
     ingredient_list = [{'id': ingr.id, 'name': ingr.name, 'price': ingr.price} for ingr in ingredients]
     return jsonify(ingredient_list)
 
+# Method to reset pizza count for all drivers
+def reset_pizza_counts():
+    drivers = DeliveryDriver.query.all()  # Fetch all drivers
+
+    # Reset pizza counts for all drivers
+    for driver in drivers:
+        # Get all active (not delivered) orders for this driver
+        active_deliveries = Delivery.query.filter_by(delivered_by=driver.id).join(CustomerOrders).filter(CustomerOrders.status != 'Delivered').all()
+
+        # Recalculate the total pizza count for this driver
+        total_pizzas = sum(delivery.pizza_count for delivery in active_deliveries)
+
+        print(f"Driver {driver.id} has {total_pizzas} pizzas assigned in active orders.")
+
+# Place order route
 @customer_bp.route('/order', methods=['POST'])
 def place_order():
     try:
@@ -165,6 +181,9 @@ def place_order():
 
         if not user_id:
             return jsonify({'error': 'User not authenticated'}), 401
+
+        # Reset pizza counts for all drivers before processing the new order
+        reset_pizza_counts()
 
         # Get user's cart
         cart = Cart.query.filter_by(customer_id=user_id).first()
@@ -181,30 +200,24 @@ def place_order():
             total_cost=total_cost,
             ordered_at=datetime.now(),
             status='Pending',
-            delivery_eta=None,  # Will be updated later
+            delivery_eta=datetime.now() + timedelta(minutes=30),  # Will be updated later
             address=data.get('address')  # Use the provided address
         )
 
         db.session.add(new_order)
         db.session.flush()  # Get the order.id
 
-        # Track pizza and order count for each driver
-        drivers_info = {}
-
-        def find_or_create_driver(new_order, batch_pizza_count):
-            """Find or create a driver for this order, ensuring limits are respected."""
-            for driver_id, info in drivers_info.items():
-                if info['pizza_count'] + batch_pizza_count <= 3 and info['order_count'] < 5:
-                    return driver_id, info
-
-            # No existing driver can take the batch, find a new driver
+        # Function to find or create a driver
+        def find_or_create_driver():
+            # Query drivers, but exclude those who already have 3 or more pizzas in active deliveries
             driver = (
                 DeliveryDriver.query
                 .outerjoin(Delivery)
                 .filter(DeliveryDriver.delivery_area == new_order.address)
                 .group_by(DeliveryDriver.id)
                 .having(func.count(Delivery.id) < 5)  # Max 5 orders per driver
-                .order_by(func.count(Delivery.id))
+                .having(or_(func.sum(Delivery.pizza_count) < 3, func.sum(Delivery.pizza_count).is_(None)))  # Exclude drivers with 3 or more pizzas
+                .order_by(func.count(Delivery.id))  # Prioritize drivers with fewer orders
                 .first()
             )
 
@@ -214,48 +227,75 @@ def place_order():
                 db.session.add(driver)
                 db.session.commit()
 
-            # Initialize tracking for this driver
-            drivers_info[driver.id] = {
-                'pizza_count': 0,
-                'order_count': 0
-            }
-            return driver.id, drivers_info[driver.id]
+            return driver
 
-        # Process all cart items
-        total_pizzas = sum(cart_item.quantity for cart_item in cart.items if cart_item.menu_item and cart_item.menu_item.category == 'pizza')
+        # Track the number of pizzas processed so far
+        pizza_count = 0
+        drivers_info = []
 
-        # Create deliveries, respecting pizza and order limits
+        # Initialize the delivery variable outside the loop
+        delivery = None
+
+        # Process all cart items (pizzas and non-pizzas alike)
         for cart_item in cart.items:
             menu_item = cart_item.menu_item
             if not menu_item:
                 continue  # Skip items with missing menu item references
 
+            # Determine whether the item is a pizza
             is_pizza = menu_item.category == 'pizza'
-            batch_pizza_count = cart_item.quantity if is_pizza else 0
+            item_quantity = cart_item.quantity
 
-            # Find or create a driver for this batch
-            driver_id, driver_info = find_or_create_driver(new_order, batch_pizza_count)
+            # Process the item in smaller batches (up to 3 pizzas per driver)
+            while item_quantity > 0:
+                # Calculate how many pizzas can be added to the current delivery
+                remaining_capacity = 3 - pizza_count if is_pizza else 3  # Allow 3 pizzas max per driver
 
-            # Create or add to a delivery
-            delivery = Delivery(
-                delivered_by=driver_id,
-                order_id=new_order.id,
-                assigned_at=datetime.now(),
-                pizza_count=batch_pizza_count  # Assign pizza count to the delivery
-            )
+                # If no more pizzas can be added or no delivery exists yet, create a new delivery
+                if pizza_count == 3 or delivery is None:
+                    driver = find_or_create_driver()
+                    delivery = Delivery(
+                        delivered_by=driver.id,
+                        order_id=new_order.id,
+                        assigned_at=datetime.now(),
+                        pizza_count=0  # Start with 0 pizzas
+                    )
+                    db.session.add(delivery)
+                    drivers_info.append(delivery)
+                    pizza_count = 0  # Reset the pizza count for the new delivery
 
-            # Update driver tracking information
-            driver_info['pizza_count'] += batch_pizza_count
-            driver_info['order_count'] += 1
-            db.session.add(delivery)
+                # Add pizzas or non-pizza items to the current delivery
+                if is_pizza:
+                    # Add only up to 3 pizzas to the current delivery
+                    pizzas_to_add = min(item_quantity, remaining_capacity)
+                    delivery.pizza_count += pizzas_to_add
+                    pizza_count += pizzas_to_add
+                    item_quantity -= pizzas_to_add  # Decrease the remaining pizzas to be processed
+                else:
+                    # Non-pizza items can be added without constraints on pizza count
+                    item_quantity = 0  # Process all non-pizza items in one step
 
-            # Create sub-orders (directly handle quantities)
-            sub_order = SubOrder(
-                order_id=new_order.id,
-                item_id=cart_item.menu_id,
-                quantity=cart_item.quantity  # Handle quantities directly
-            )
-            db.session.add(sub_order)
+                # Create sub-order for this batch of items (pizzas or non-pizzas)
+                sub_order = SubOrder(
+                    order_id=new_order.id,
+                    item_id=cart_item.menu_id,
+                    quantity=cart_item.quantity  # Handle quantity directly
+                )
+
+                db.session.add(sub_order)
+                db.session.flush()
+
+                # Add ordered ingredients
+                if cart_item.customizations:
+                    for customization in cart_item.customizations:
+                        ordered_ingredient = OrderedIngredient(
+                            sub_order_id=sub_order.id,  # Set the correct sub_order_id
+                            ingredient_id=customization['ingredient_id'],
+                            action=customization['action']  # e.g., 'add' or 'remove'
+                        )
+                        db.session.add(ordered_ingredient)
+
+                
 
         # Clear the user's cart after order creation
         for item in cart.items:
@@ -265,8 +305,7 @@ def place_order():
         db.session.commit()
 
         # Fetch the deliveries to return the correct driver IDs
-        deliveries = Delivery.query.filter_by(order_id=new_order.id).all()
-        driver_ids = [delivery.delivered_by for delivery in deliveries]
+        driver_ids = [delivery.delivered_by for delivery in drivers_info]
 
         # Return the order details, including all drivers used for the order
         return jsonify({
@@ -274,6 +313,7 @@ def place_order():
             'order_id': new_order.id,
             'total_cost': new_order.total_cost,
             'ordered_at': new_order.ordered_at.strftime('%d/%m/%Y %H:%M'),
+            'delivery_eta': new_order.delivery_eta.strftime('%d/%m/%Y %H:%M'),
             'delivery_drivers': driver_ids,  # List of drivers used for the order
             'address': new_order.address
         }), 201
@@ -309,7 +349,7 @@ def get_order():
             'order_id': order.id,
             'total_cost': order.total_cost,
             'ordered_at': order.ordered_at.strftime('%d/%m/%Y %H:%M'),
-            'delivery_eta': order.delivery_eta.strftime('%d/%m/%Y %H:%M') if order.delivery_eta else None,
+            'delivery_eta': order.delivery_eta.strftime('%d/%m/%Y %H:%M'),
             'address': order.address,
             'status': order.status,
             'delivery_drivers': driver_ids  # Now returns multiple drivers if applicable
@@ -370,7 +410,11 @@ def cancel_order(order_id):
 
         # If the order is 'Delivered' or 'Cancelled', allow deletion
         if order.status == 'Delivered' or order.status == 'Cancelled':
-            # Delete any associated delivery records first
+            # Delete any associated delivery records first and sub-orders
+            sub_orders = SubOrder.query.filter_by(order_id=order.id).all()
+            for sub_order in sub_orders:
+                OrderedIngredient.query.filter_by(sub_order_id=sub_order.id).delete()
+            SubOrder.query.filter_by(order_id=order.id).delete()
             Delivery.query.filter_by(order_id=order.id).delete()
             db.session.delete(order)
             db.session.commit()
@@ -429,7 +473,7 @@ def add_to_cart():
 
         # Check if item already exists in cart
         cart_item = CartItem.query.filter_by(cart_id=cart.id, menu_id=menu_id).first()
-        if cart_item:
+        if cart_item and cart_item.customizations == customizations:
             cart_item.customizations = customizations
             cart_item.quantity += quantity
         else:
