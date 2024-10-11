@@ -45,7 +45,10 @@ const AdminTab = () => {
                             </div>
                             <p className="text-gray-500">Status: {order.status}</p>
                             <p className="text-gray-500">Ordered At: {new Date(order.ordered_at).toLocaleString()}</p>
-                            <p className="text-gray-500">Driver ID: {order.driver_id}</p>
+
+                            {/* Display multiple drivers */}
+                            <p className="text-gray-500">Driver IDs: {order.driver_ids.length > 0 ? order.driver_ids.join(', ') : 'N/A'}</p>
+
                             <p className="text-gray-500">Customer: {order.customer_name}</p>
                             <p className="text-gray-500">Address: {order.customer_address}</p>
                             
@@ -106,6 +109,5 @@ const AdminTab = () => {
             )}
         </div>
     );
-};
-
+}
 export default AdminTab;

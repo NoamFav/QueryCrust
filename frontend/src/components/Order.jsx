@@ -59,8 +59,12 @@ const Order = () => {
                                         <h3 className="text-xl font-semibold">Order ID: {order.order_id}</h3>
                                         <p className="text-gray-600">Total: {order.total_cost} €</p>
                                         <p className="text-gray-600">Date: {new Date(order.ordered_at).toLocaleString()}</p>
+                                        <p className="text-gray-600">Address: {order.address}</p>
                                         <p className="text-gray-600">ETA: {order.delivery_eta ? new Date(order.delivery_eta).toLocaleString() : 'N/A'}</p>
-                                        <p className="text-gray-600">Driver: {order.delivery_driver || 'N/A'}</p>
+
+                                        {/* Display multiple drivers */}
+                                        <p className="text-gray-600">Drivers: {order.delivery_drivers.join(', ') || 'N/A'}</p>
+
                                         <p className="text-gray-600">Status: {order.status}</p>
                                     </div>
                                     <div className="flex flex-col items-end">
@@ -96,6 +100,5 @@ const Order = () => {
             </div>
         </div>
     );
-};
-
+}
 export default Order;

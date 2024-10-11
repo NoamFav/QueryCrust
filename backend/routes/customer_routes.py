@@ -92,6 +92,14 @@ def register():
     session['user_id'] = new_user.id
     session['cart_id'] = cart.id
 
+    # Create Delivery Driver at his position (postal code) if not exists already (its a dummy data and MAFIA PIZZA is not responsible for any delivery, its just MAGIC)
+    driver = DeliveryDriver.query.filter_by(delivery_area=new_user.address).first()
+    if not driver:
+        driver = DeliveryDriver(delivery_area=new_user.address)
+        db.session.add(driver)
+        db.session.commit()
+        print(f"New driver created for delivery area: {new_user.address}")
+
     return jsonify({
     'message': 'User created successfully',
     'user_id': new_user.id,
@@ -153,6 +161,7 @@ def get_ingredients():
 def place_order():
     try:
         user_id = session.get('user_id')
+        data = request.get_json()
 
         if not user_id:
             return jsonify({'error': 'User not authenticated'}), 401
@@ -163,7 +172,7 @@ def place_order():
         if not cart or not cart.items:
             return jsonify({'error': 'Cart is empty'}), 400
 
-        # Calculate total cost of the order
+        # Calculate total cost of the order (for all items)
         total_cost = sum(item.total_price * item.quantity for item in cart.items)
 
         # Create a new customer order
@@ -172,69 +181,101 @@ def place_order():
             total_cost=total_cost,
             ordered_at=datetime.now(),
             status='Pending',
-            delivery_eta=None  # Will be calculated later
+            delivery_eta=None,  # Will be updated later
+            address=data.get('address')  # Use the provided address
         )
+
         db.session.add(new_order)
         db.session.flush()  # Get the order.id
 
-        # Create sub-orders for each cart item and include ingredients
+        # Track pizza and order count for each driver
+        drivers_info = {}
+
+        def find_or_create_driver(new_order, batch_pizza_count):
+            """Find or create a driver for this order, ensuring limits are respected."""
+            for driver_id, info in drivers_info.items():
+                if info['pizza_count'] + batch_pizza_count <= 3 and info['order_count'] < 5:
+                    return driver_id, info
+
+            # No existing driver can take the batch, find a new driver
+            driver = (
+                DeliveryDriver.query
+                .outerjoin(Delivery)
+                .filter(DeliveryDriver.delivery_area == new_order.address)
+                .group_by(DeliveryDriver.id)
+                .having(func.count(Delivery.id) < 5)  # Max 5 orders per driver
+                .order_by(func.count(Delivery.id))
+                .first()
+            )
+
+            if not driver:
+                # Create a new driver if none exist in the area
+                driver = DeliveryDriver(delivery_area=new_order.address)
+                db.session.add(driver)
+                db.session.commit()
+
+            # Initialize tracking for this driver
+            drivers_info[driver.id] = {
+                'pizza_count': 0,
+                'order_count': 0
+            }
+            return driver.id, drivers_info[driver.id]
+
+        # Process all cart items
+        total_pizzas = sum(cart_item.quantity for cart_item in cart.items if cart_item.menu_item and cart_item.menu_item.category == 'pizza')
+
+        # Create deliveries, respecting pizza and order limits
         for cart_item in cart.items:
+            menu_item = cart_item.menu_item
+            if not menu_item:
+                continue  # Skip items with missing menu item references
+
+            is_pizza = menu_item.category == 'pizza'
+            batch_pizza_count = cart_item.quantity if is_pizza else 0
+
+            # Find or create a driver for this batch
+            driver_id, driver_info = find_or_create_driver(new_order, batch_pizza_count)
+
+            # Create or add to a delivery
+            delivery = Delivery(
+                delivered_by=driver_id,
+                order_id=new_order.id,
+                assigned_at=datetime.now(),
+                pizza_count=batch_pizza_count  # Assign pizza count to the delivery
+            )
+
+            # Update driver tracking information
+            driver_info['pizza_count'] += batch_pizza_count
+            driver_info['order_count'] += 1
+            db.session.add(delivery)
+
+            # Create sub-orders (directly handle quantities)
             sub_order = SubOrder(
                 order_id=new_order.id,
                 item_id=cart_item.menu_id,
-                quantity=cart_item.quantity
+                quantity=cart_item.quantity  # Handle quantities directly
             )
             db.session.add(sub_order)
-            db.session.flush()  # Get the sub_order.id now
 
-            # Add ordered ingredients
-            if cart_item.customizations:
-                for customization in cart_item.customizations:
-                    ordered_ingredient = OrderedIngredient(
-                        sub_order_id=sub_order.id,  # Set the correct sub_order_id
-                        ingredient_id=customization['ingredient_id'],
-                        action=customization['action']  # e.g., 'add' or 'remove'
-                    )
-                    db.session.add(ordered_ingredient)
-        # Assign a driver with the fewest deliveries
-        driver = DeliveryDriver.query.outerjoin(Delivery).group_by(DeliveryDriver.id).order_by(func.count(Delivery.id)).first()
-
-        if not driver:
-            return jsonify({'error': 'No drivers available'}), 400
-
-        # Calculate delivery ETA
-        driver_orders_count = Delivery.query.filter_by(delivered_by=driver.id).count()
-        eta_minutes = 20 + (driver_orders_count * 5)
-        delivery_eta = datetime.now() + timedelta(minutes=eta_minutes)
-
-        # Create a delivery entry for the order
-        delivery = Delivery(
-            delivered_by=driver.id,
-            order_id=new_order.id,
-            assigned_at=datetime.now(),
-            pizza_count=len(cart.items)
-        )
-        db.session.add(delivery)
-
-        # Update the order with the calculated delivery ETA
-        new_order.delivery_eta = delivery_eta
-
-        # Clear the user's cart
+        # Clear the user's cart after order creation
         for item in cart.items:
             db.session.delete(item)
 
         # Commit the transaction
         db.session.commit()
 
-        formatted_eta = delivery_eta.strftime('%d/%m/%Y %H:%M')
+        # Fetch the deliveries to return the correct driver IDs
+        deliveries = Delivery.query.filter_by(order_id=new_order.id).all()
+        driver_ids = [delivery.delivered_by for delivery in deliveries]
 
-        # Return the order details
+        # Return the order details, including all drivers used for the order
         return jsonify({
             'message': 'Order placed successfully',
             'order_id': new_order.id,
             'total_cost': new_order.total_cost,
             'ordered_at': new_order.ordered_at.strftime('%d/%m/%Y %H:%M'),
-            'delivery_eta': formatted_eta,
+            'delivery_drivers': driver_ids,  # List of drivers used for the order
+            'address': new_order.address
         }), 201
 
     except Exception as e:
@@ -249,7 +290,6 @@ def get_order():
         return jsonify({'error': 'User not authenticated'}), 401
 
     orders = CustomerOrders.query.filter_by(customer_id=user_id).all()
-
     orders.sort(key=lambda x: x.ordered_at, reverse=True)
 
     for order in orders:
@@ -259,66 +299,89 @@ def get_order():
                 order.status = 'Cancelled'
                 db.session.commit()
 
-    order_list = [
-        {
+    order_list = []
+    for order in orders:
+        # Get all the drivers associated with the order
+        deliveries = Delivery.query.filter_by(order_id=order.id).all()
+        driver_ids = [delivery.delivered_by for delivery in deliveries]
+
+        order_list.append({
             'order_id': order.id,
             'total_cost': order.total_cost,
             'ordered_at': order.ordered_at.strftime('%d/%m/%Y %H:%M'),
             'delivery_eta': order.delivery_eta.strftime('%d/%m/%Y %H:%M') if order.delivery_eta else None,
+            'address': order.address,
             'status': order.status,
-            'delivery_driver': order.delivery.delivered_by
-        }
-        for order in orders
-    ]
+            'delivery_drivers': driver_ids  # Now returns multiple drivers if applicable
+        })
+
     return jsonify(order_list)
 
 @customer_bp.route('/orders/<int:order_id>', methods=['GET'])
 def get_order_details(order_id):
     order = CustomerOrders.query.get_or_404(order_id)
     sub_orders = SubOrder.query.filter_by(order_id=order_id).all()
+    
+    # Get all deliveries for this order
+    deliveries = Delivery.query.filter_by(order_id=order_id).all()
+    driver_ids = [delivery.delivered_by for delivery in deliveries]
+
     order_items = [
         {
-            'id': sub_order.item.id,
-            'name': sub_order.item.name,
-            'price': sub_order.item.price
+            'id': sub_order.menu_item.id,
+            'name': sub_order.menu_item.name,
+            'price': sub_order.menu_item.price,
+            'quantity': sub_order.quantity
         }
         for sub_order in sub_orders
     ]
+
     return jsonify({
         'order_id': order.id,
         'total_cost': order.total_cost,
         'ordered_at': order.ordered_at.strftime('%d/%m/%Y %H:%M'),
         'delivery_eta': order.delivery_eta.strftime('%d/%m/%Y %H:%M') if order.delivery_eta else None,
         'status': order.status,
-        'items': order_items
+        'items': order_items,
+        'delivery_drivers': driver_ids  # List of drivers for the order
     })
 
 @customer_bp.route('/orders/<int:order_id>/cancel', methods=['DELETE'])
 def cancel_order(order_id):
-    order = CustomerOrders.query.get_or_404(order_id)
+    try:
+        order = CustomerOrders.query.get_or_404(order_id)
 
-    # If the order is 'Pending' and was placed less than 5 minutes ago, allow cancellation
-    if order.status == 'Pending':
-        time_diff = datetime.now() - order.ordered_at
-        if time_diff.total_seconds() < 300: 
-            order.status = 'Cancelled'
+        # If the order is 'Pending' and was placed less than 5 minutes ago, allow cancellation
+        if order.status == 'Pending':
+            time_diff = datetime.now() - order.ordered_at
+            if time_diff.total_seconds() < 300: 
+                # First delete any related delivery records
+                Delivery.query.filter_by(order_id=order.id).delete()
+                
+                order.status = 'Cancelled'
+                db.session.commit()
+                return jsonify({'message': 'Order cancelled successfully'}), 200
+            else:
+                return jsonify({'error': 'Order cannot be cancelled after 5 minutes'}), 400
+
+        # If the order is 'In Delivery', it cannot be cancelled
+        if order.status == 'In Delivery':
+            return jsonify({'error': 'Order is in delivery and cannot be cancelled'}), 400
+
+        # If the order is 'Delivered' or 'Cancelled', allow deletion
+        if order.status == 'Delivered' or order.status == 'Cancelled':
+            # Delete any associated delivery records first
+            Delivery.query.filter_by(order_id=order.id).delete()
+            db.session.delete(order)
             db.session.commit()
-            return jsonify({'message': 'Order cancelled successfully'}), 200
-        else:
-            return jsonify({'error': 'Order cannot be cancelled after 5 minutes'}), 400
+            return jsonify({'message': 'Order has been removed successfully'}), 200
 
-    # If the order is 'In Delivery', it cannot be cancelled
-    if order.status == 'In Delivery':
-        return jsonify({'error': 'Order is in delivery and cannot be cancelled'}), 400
-
-    # If the order is 'Delivered', allow deletion
-    if order.status == 'Delivered' or order.status == 'Cancelled':
-        db.session.delete(order)
-        db.session.commit()
-        return jsonify({'message': 'Order has been removed successfully'}), 200
-
-    # Otherwise, if the status is anything else, cancellation is not allowed
-    return jsonify({'error': 'Order cannot be cancelled'}), 400
+        # Otherwise, if the status is anything else, cancellation is not allowed
+        return jsonify({'error': 'Order cannot be cancelled'}), 400
+    except Exception as e:
+        print(f"Error cancelling order: {e}")  # Log the error for debugging
+        db.session.rollback()  # Roll back the session on error
+        return jsonify({'error': 'Internal Server Error'}), 500
 
 @customer_bp.route('/cart', methods=['GET'])
 def get_cart():

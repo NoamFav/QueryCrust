@@ -1,6 +1,6 @@
 # routes/admin_routes.py
 from flask import Blueprint, jsonify, request
-from models.database import Menu, CustomerOrders, DeliveryDriver, OrderedIngredient, SubOrder, CartItem
+from models.database import Menu, CustomerOrders, DeliveryDriver, OrderedIngredient, SubOrder, CartItem, Delivery
 from models import db
 
 admin_bp = Blueprint('admin_bp', __name__)
@@ -16,20 +16,23 @@ def get_menu():
 def get_all_orders():
     orders = CustomerOrders.query.all()  # Fetch all orders
     order_list = []
+
     for order in orders:
         customer = order.customer  # Get the customer associated with the order
-        delivery = order.delivery  # Get the delivery associated with the order
-        driver = delivery.driver if delivery else None  # Get the driver, if assigned
+        
+        # Get all deliveries for this order
+        deliveries = Delivery.query.filter_by(order_id=order.id).all()
+        driver_ids = [delivery.delivered_by for delivery in deliveries]
 
         order_info = {
             'order_id': order.id,
             'customer_id': order.customer_id,
             'customer_name': customer.name,  # Assuming you have the 'name' field in 'customer'
-            'customer_address': customer.address,  # Assuming 'address' exists in 'customer'
+            'customer_address': order.address,  # Assuming 'address' exists in 'customer'
             'total_cost': order.total_cost,
             'status': order.status,
             'ordered_at': order.ordered_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'driver_id': driver.id if driver else None,  # Assign driver ID if driver is assigned
+            'driver_ids': driver_ids,  # List of drivers assigned to this order
             'items': get_item_from_order(order),
         }
         order_list.append(order_info)

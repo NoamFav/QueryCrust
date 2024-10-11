@@ -15,11 +15,6 @@ const MenuItem = ({ item, category, fetchMenuItems, isAdmin }) => {
     }
   };
 
-  // Handle modifying the item
-  const handleModify = () => {
-    navigate(`/menu/modify/${item.id}`);  // Navigate to the modify page
-  };
-
   // Handle removing the item
   const handleRemove = () => {
       fetch(`http://localhost:5001/api/admin/menu/${item.id}`, {
@@ -56,16 +51,8 @@ const MenuItem = ({ item, category, fetchMenuItems, isAdmin }) => {
           {category === 'pizza' ? 'Customize' : 'Add to Cart'}
         </button>
 
-        {/* Conditionally render the Modify and Remove buttons if isAdmin is true */}
         {isAdmin && (
           <div className="flex space-x-4 mt-4">
-            <button
-              className="bg-yellow-500 text-white px-5 py-2 rounded-lg hover:bg-yellow-600 transition ease-in-out duration-200"
-              onClick={handleModify}
-            >
-              Modify
-            </button>
-
             <button
               className="bg-red-500 text-white px-5 py-2 rounded-lg hover:bg-red-600 transition ease-in-out duration-200"
               onClick={handleRemove}

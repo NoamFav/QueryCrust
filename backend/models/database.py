@@ -9,7 +9,7 @@ class CustomerPersonalInformation(db.Model):
     __tablename__ = 'customer_personal_information'
 
     id = db.Column(db.Integer, primary_key=True)
-    address = db.Column(db.String(50))
+    address = db.Column(db.String(255))
     birthday = db.Column(db.DateTime)
     phone_number = db.Column(db.String(15))
     password = db.Column(db.String(100))
@@ -58,17 +58,19 @@ class CustomerOrders(db.Model):
     delivery_eta = db.Column(db.DateTime)
     ordered_at = db.Column(db.DateTime)
     status = db.Column(db.String(25))
+    address = db.Column(db.String(255))
 
     customer = relationship('CustomerPersonalInformation', back_populates='orders')
     sub_orders = relationship('SubOrder', back_populates='order')
     delivery = relationship('Delivery', back_populates='order', uselist=False)
 
-    def __init__(self, customer_id, total_cost, ordered_at, status, delivery_eta):
+    def __init__(self, customer_id, total_cost, ordered_at, status, delivery_eta, address):
         self.customer_id = customer_id
         self.total_cost = total_cost
         self.status = status
         self.ordered_at = ordered_at
         self.delivery_eta = delivery_eta
+        self.address = address
 
 
 
