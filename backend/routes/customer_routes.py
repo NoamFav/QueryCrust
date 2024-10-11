@@ -208,21 +208,21 @@ def place_order():
         db.session.flush()  # Get the order.id
 
         # Function to find or create a driver
-        def find_or_create_driver():
-            # Query drivers, but exclude those who already have 3 or more pizzas in active deliveries
+        def find_or_create_driver(item_quantity=0):
+            # Query drivers, but exclude those who would exceed 3 pizzas after adding the current item quantity
             driver = (
                 DeliveryDriver.query
                 .outerjoin(Delivery)
                 .filter(DeliveryDriver.delivery_area == new_order.address)
                 .group_by(DeliveryDriver.id)
                 .having(func.count(Delivery.id) < 5)  # Max 5 orders per driver
-                .having(or_(func.sum(Delivery.pizza_count) < 3, func.sum(Delivery.pizza_count).is_(None)))  # Exclude drivers with 3 or more pizzas
-                .order_by(func.count(Delivery.id).desc())  # Prioritize drivers with fewer orders
+                .having(or_(func.sum(Delivery.pizza_count) + item_quantity <= 3, func.sum(Delivery.pizza_count).is_(None)))  # Ensure total pizza count doesn't exceed 3
+                .order_by(func.count(Delivery.id).desc())  # Prioritize drivers with more orders
                 .first()
             )
 
             if not driver:
-                # Create a new driver if none exist in the area
+                # Create a new driver if none exist in the area or if all drivers would exceed the pizza limit
                 driver = DeliveryDriver(delivery_area=new_order.address)
                 db.session.add(driver)
                 db.session.commit()
@@ -246,14 +246,19 @@ def place_order():
             is_pizza = menu_item.category == 'pizza'
             item_quantity = cart_item.quantity
 
+            pizza_amount = 0
+            for cart_item in cart.items:
+                if cart_item.menu_item.category == 'pizza':
+                    pizza_amount += cart_item.quantity
+
             # Process the item in smaller batches (up to 3 pizzas per driver)
             while item_quantity > 0:
                 # Calculate how many pizzas can be added to the current delivery
                 remaining_capacity = 3 - pizza_count if is_pizza else 3  # Allow 3 pizzas max per driver
 
                 # If no more pizzas can be added or no delivery exists yet, create a new delivery
-                if pizza_count == 3 or delivery is None:
-                    driver = find_or_create_driver()
+                if pizza_count > 3 or delivery is None:
+                    driver = find_or_create_driver(pizza_amount)
                     delivery = Delivery(
                         delivered_by=driver.id,
                         order_id=new_order.id,
