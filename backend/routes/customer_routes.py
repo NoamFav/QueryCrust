@@ -217,7 +217,7 @@ def place_order():
                 .group_by(DeliveryDriver.id)
                 .having(func.count(Delivery.id) < 5)  # Max 5 orders per driver
                 .having(or_(func.sum(Delivery.pizza_count) < 3, func.sum(Delivery.pizza_count).is_(None)))  # Exclude drivers with 3 or more pizzas
-                .order_by(func.count(Delivery.id))  # Prioritize drivers with fewer orders
+                .order_by(func.count(Delivery.id).desc())  # Prioritize drivers with fewer orders
                 .first()
             )
 
