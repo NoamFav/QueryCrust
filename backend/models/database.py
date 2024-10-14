@@ -182,9 +182,7 @@ def set_menu_id(mapper, connection, target):
     start_id = category_code * 1000
     end_id = start_id + 999
 
-    # Initialize the max_id for this category if not already set
     if category_code not in Menu._max_ids:
-        # Query the database for the current max ID in this category
         stmt = select(func.max(Menu.id)).where(Menu.id.between(start_id, end_id))
         result = connection.execute(stmt)
         max_id = result.scalar() or (start_id - 1)

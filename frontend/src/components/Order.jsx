@@ -70,11 +70,7 @@ const Order = () => {
                                     <div className="flex flex-col items-end">
                                         <button
                                             onClick={() => {
-                                                if (order.status === 'Pending' && order.canCancel) {
-                                                    removeOrder(order.order_id);  // Cancel pending order within 5 min
-                                                } else if (order.status === 'Delivered' || order.status === 'Cancelled') {
-                                                    removeOrder(order.order_id);  // Remove delivered order
-                                                }
+                                                removeOrder(order.order_id);
                                             }}
                                             disabled={order.status === 'In Delivery' || (order.status === 'Pending' && !order.canCancel)}
                                             className={`mt-2 px-4 py-2 rounded-lg transition ease-in-out duration-200 ${
