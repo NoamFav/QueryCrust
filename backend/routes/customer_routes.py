@@ -247,9 +247,9 @@ def place_order():
             item_quantity = cart_item.quantity
 
             pizza_amount = 0
-            for cart_item in cart.items:
-                if cart_item.menu_item.category == 'pizza':
-                    pizza_amount += cart_item.quantity
+            for cart_item_pizza in cart.items:
+                if cart_item_pizza.menu_item.category == 'pizza':
+                    pizza_amount += cart_item_pizza.quantity
 
             # Process the item in smaller batches (up to 3 pizzas per driver)
             while item_quantity > 0:
