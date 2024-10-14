@@ -61,6 +61,14 @@ const PersonalDetails = () => {
             <p className="text-lg font-semibold text-gray-700">Gender:</p>
             <p className="text-gray-800">{userDetails.gender}</p>
           </div>
+          <div>
+            <p className="text-lg font-semibold text-gray-700">Number of orders:</p>
+            <p className="text-gray-800">{userDetails.previous_orders}</p>
+          </div>
+          <div>
+            <p className="text-lg font-semibold text-gray-700">Last order:</p>
+            <p className="text-gray-800">{userDetails.last_order}</p>
+          </div>
         </div>
       </div>
     </div>

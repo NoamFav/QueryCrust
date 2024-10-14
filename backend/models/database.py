@@ -15,6 +15,7 @@ class CustomerPersonalInformation(db.Model):
     password = db.Column(db.String(100))
     gender = db.Column(db.String(18))
     previous_orders = db.Column(db.Integer)
+    last_order = db.Column(db.DateTime)
     age = db.Column(db.Integer)
     name = db.Column(db.String(50))
     email = db.Column(db.String(50))
@@ -109,7 +110,14 @@ class Discounts(db.Model):
     __tablename__ = 'discounts'
 
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(20))
+    value = db.Column(db.Float)
     used = db.Column(db.Boolean)
+
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+        self.used = False
 
 class SubOrder(db.Model):
     __tablename__ = 'sub_order'

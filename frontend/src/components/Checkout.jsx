@@ -10,6 +10,11 @@ const Checkout = () => {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderDetails, setOrderDetails] = useState(null);
   const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [discountCode, setDiscountCode] = useState('');
+  const [discountValue, setDiscountValue] = useState(0);
+  const [totalCost, setTotalCost] = useState(cartItems.reduce((acc, item) => acc + item.total_price, 0));
+  const [originalCost, setOriginalCost] = useState(totalCost); // Original cost before applying discount
+  const [appliedDiscount, setAppliedDiscount] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -31,13 +36,18 @@ const Checkout = () => {
       return;
     }
 
+    if(!appliedDiscount) {
+        setDiscountValue(0); // Set discount value to 0 if no discount applied
+        setDiscountCode(''); // Clear discount code
+    }
+
     fetch('http://localhost:5001/api/customer/order', {
       method: 'POST',
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ address: deliveryAddress }), // Pass the address to the backend
+        body: JSON.stringify({ address: deliveryAddress, discountValue: discountValue, discountName: discountCode }), // Pass the address to the backend
     })
       .then((response) => response.json())
       .then((data) => {
@@ -53,6 +63,52 @@ const Checkout = () => {
       .catch((err) => console.error('Error during checkout:', err));
   };
 
+  const applyDiscount = () => {
+    if (!discountCode.trim()) {
+      setError('Please enter a promo code.');
+      return;
+    }
+
+    // Prevent applying more than one discount
+    if (appliedDiscount) {
+      setError('A discount code has already been applied. Please remove it before applying a new one.');
+      return;
+    }
+
+    fetch('http://localhost:5001/api/customer/discount', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ discount_code: discountCode }), // Send discount code to the backend
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.error) {
+          setError(data.error); // Show error message if the discount code is invalid
+          setDiscountCode(''); // Reset discount code if invalid
+        } else {
+          setError(''); // Clear error
+          setAppliedDiscount(true); // Mark that a discount is applied
+          setOriginalCost(totalCost); // Store original cost before applying discount
+          setTotalCost((prevTotal) => prevTotal * (1 - data.discount_value)); // Apply discount and update total cost
+          setDiscountValue(data.discount_value); // Store the discount value
+          setDiscountCode(data.discount_name); // Store the discount code
+        }
+      })
+      .catch((err) => {
+        console.error('Error applying discount:', err);
+        setError('Failed to apply discount code.');
+      });
+  };
+
+  // Function to remove the discount
+  const removeDiscount = () => {
+    setAppliedDiscount(false); // Reset discount state
+    setTotalCost(originalCost); // Revert to original cost
+    setDiscountCode(''); // Clear discount code
+    setError(''); // Clear any error messages
+  };
   if (orderPlaced) {
     return (
       <div className="min-h-screen flex flex-col justify-center items-center bg-gray-100">
@@ -123,8 +179,45 @@ const Checkout = () => {
               {error && <p className="text-red-500 mt-2">{error}</p>}
             </div>
 
-            <div className="mt-6 border-t border-gray-300 pt-4">
-              <p className="text-lg font-semibold text-right">Total: ${cartItems.reduce((acc, item) => acc + item.total_price, 0).toFixed(2)}</p>
+            <div className="mt-6">
+              <label className="block mb-2 font-semibold text-gray-700">Promo Code:</label>
+              <input
+                type="text"
+                className="w-full px-4 py-2 border rounded-lg text-gray-700"
+                placeholder="Enter promo code"
+                value={discountCode}
+                disabled={appliedDiscount}
+                onChange={(e) => setDiscountCode(e.target.value)} // Handle promo code input
+              />
+              <button
+                onClick={applyDiscount} // Apply the discount code
+                className="mt-2 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200"
+                disabled={appliedDiscount} // Disable if discount is already applied
+              >
+                Apply Promo Code
+              </button>
+              {appliedDiscount && (
+                <button
+                  onClick={removeDiscount} // Remove the discount
+                  className="mt-2 ml-2 bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition duration-200"
+                >
+                  Remove Promo Code
+                </button>
+              )}
+              {error && <p className="text-red-500 mt-2">{error}</p>}
+            </div>
+
+            <div className="mt-6 border-t border-gray-300 pt-4 text-right">
+              {appliedDiscount ? (
+                <p className="text-lg font-semibold">
+                  <span className="text-gray-500 line-through">${originalCost.toFixed(2)}</span>
+                  <span className="text-green-600">${totalCost.toFixed(2)}</span> 
+                </p>
+              ) : (
+                <p className="text-lg font-semibold">
+                  <span>${totalCost.toFixed(2)}</span> 
+                </p>
+              )}
             </div>
 
             <button

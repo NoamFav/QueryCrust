@@ -1,6 +1,6 @@
 # routes/customer_routes.py
 from flask import Blueprint, jsonify, request, session
-from models.database import Menu, CustomerOrders, CustomerPersonalInformation, SubOrder, Ingredient, OrderedIngredient, Cart, CartItem, DeliveryDriver, Delivery
+from models.database import Menu, CustomerOrders, CustomerPersonalInformation, SubOrder, Ingredient, OrderedIngredient, Cart, CartItem, DeliveryDriver, Delivery, Discounts
 from datetime import datetime
 from models import db
 import traceback
@@ -142,6 +142,8 @@ def get_customer():
         'email': user.email,
         'birthday': user.birthday,
         'gender': user.gender,
+        'previous_orders': user.previous_orders,
+        'last_order': user.last_order.strftime('%Y-%m-%d %H:%M:%S') if user.last_order else None
         })
 
 # Get menu items
@@ -198,6 +200,30 @@ def reset_pizza_counts():
 
         print(f"Driver {driver.id} has {total_pizzas} pizzas assigned in active orders.")
 
+@customer_bp.route('/discount', methods=['POST'])
+def apply_discount():
+    
+    data = request.get_json()
+    discount_code = data.get('discount_code')
+
+    discounts = Discounts.query.all()
+    discount_codes = [discount.name for discount in discounts]
+
+    if discount_code not in discount_codes:
+        return jsonify({'error': 'Invalid discount code'}), 400
+
+    discount = Discounts.query.filter_by(name=discount_code).first()
+    assert discount, 'Discount not found'
+    
+    if discount.used:
+        return jsonify({'error': 'Discount code has already been used'}), 400
+
+    return jsonify({
+        'message': 'Discount code applied successfully',
+        'discount_name': discount.name,
+        'discount_value': discount.value
+    }), 200
+
 # Place an order
 @customer_bp.route('/order', methods=['POST'])
 def place_order():
@@ -223,6 +249,17 @@ def place_order():
         # Calculate the total cost of the order with the items in the cart times their quantities
         total_cost = sum(item.total_price * item.quantity for item in cart.items)
 
+        discount_code = data.get('discountName') # Get the discount code from the request database
+        if discount_code:
+            discount = Discounts.query.filter_by(name=discount_code).first()
+            assert discount, 'Discount not found'
+            discount.used = True # Mark the discount as used
+
+        discount = data.get('discountValue') # Get the discount value from the request data
+        if discount:
+            total_cost = total_cost * (1 - discount) # Apply the discount to the total cost
+            total_cost = round(total_cost, 2) # Round the total cost to 2 decimal places
+
         # Create a new order with the user's ID, total cost, and address
         new_order = CustomerOrders(
             customer_id=user_id,
@@ -232,6 +269,12 @@ def place_order():
             delivery_eta=datetime.now() + timedelta(minutes=30), # Set the delivery ETA to 30 minutes from now (for testing purposes)
             address=data.get('address') # Get the address from the request data not from the user's information (You may need to deliver to a different address)
         )
+
+        # Update the customer information with the new order
+        customer_info = CustomerPersonalInformation.query.get(user_id)
+        assert customer_info, 'Customer not found'
+        customer_info.previous_orders += 1 # Increase the number of previous orders for the customer
+        customer_info.last_order = datetime.now() # Set the last order date and time to the current date and time
 
         # Add the new order to the database
         db.session.add(new_order)
