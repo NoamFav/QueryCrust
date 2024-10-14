@@ -317,8 +317,8 @@ def place_order():
             'message': 'Order placed successfully',
             'order_id': new_order.id,
             'total_cost': new_order.total_cost,
-            'ordered_at': new_order.ordered_at.strftime('%d/%m/%Y %H:%M'),
-            'delivery_eta': new_order.delivery_eta.strftime('%d/%m/%Y %H:%M'),
+            'ordered_at': new_order.ordered_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'delivery_eta': new_order.delivery_eta.strftime('%Y-%m-%d %H:%M:%S'),
             'delivery_drivers': driver_ids,  # List of drivers used for the order
             'address': new_order.address
         }), 201
@@ -353,8 +353,8 @@ def get_order():
         order_list.append({
             'order_id': order.id,
             'total_cost': order.total_cost,
-            'ordered_at': order.ordered_at.strftime('%d/%m/%Y %H:%M'),
-            'delivery_eta': order.delivery_eta.strftime('%d/%m/%Y %H:%M'),
+            'ordered_at': order.ordered_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'delivery_eta': order.delivery_eta.strftime('%Y-%m-%d %H:%M:%S'),
             'address': order.address,
             'status': order.status,
             'delivery_drivers': driver_ids  # Now returns multiple drivers if applicable
@@ -384,8 +384,8 @@ def get_order_details(order_id):
     return jsonify({
         'order_id': order.id,
         'total_cost': order.total_cost,
-        'ordered_at': order.ordered_at.strftime('%d/%m/%Y %H:%M'),
-        'delivery_eta': order.delivery_eta.strftime('%d/%m/%Y %H:%M') if order.delivery_eta else None,
+        'ordered_at': order.ordered_at.strftime('%Y-%m-%d %H:%M:%S'),
+        'delivery_eta': order.delivery_eta.strftime('%Y-%m-%d %H:%M:%S') if order.delivery_eta else None,
         'status': order.status,
         'items': order_items,
         'delivery_drivers': driver_ids  # List of drivers for the order
