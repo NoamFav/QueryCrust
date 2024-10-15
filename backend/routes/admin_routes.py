@@ -120,10 +120,18 @@ def update_order_status(order_id):
     
     # Get the order from the database
     order = CustomerOrders.query.get_or_404(order_id)
+    delivery = Delivery.query.filter_by(order_id=order_id).first()
+    driver_ids = [delivery.delivered_by] if delivery else []
 
     try:
         # Update the status of the order
         order.status = status
+        if status == 'Delivered':
+            for driver_id in driver_ids:
+                driver = DeliveryDriver.query.get_or_404(driver_id)
+                if not driver:
+                    return jsonify({'error': f'Delivery driver with ID {driver_id} not found'}), 404
+                driver.last_delivery = order.ordered_at
         db.session.commit()
         return jsonify({'message': 'Order status updated', 'order_id': order_id, 'new_status': status}), 200
     except Exception as e:
