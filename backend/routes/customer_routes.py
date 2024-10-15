@@ -454,6 +454,10 @@ def get_order():
     
     # Process each order to get the order information
     for order in orders:
+
+        if order.status == 'Delivered' or order.status == 'Cancelled':
+            continue # Skip the order if it is delivered or cancelled (we don't need to show it to the user but we need to keep it in the database for records)
+
         # Get the sub-orders for the order based on the order ID
         deliveries = Delivery.query.filter_by(order_id=order.id).all()
 
@@ -542,18 +546,19 @@ def cancel_order(order_id):
 
         # If the order is delivered or cancelled, you can remove it from the database
         if order.status == 'Delivered' or order.status == 'Cancelled':
+            # temporarily commented out to prevent deletion of orders from the database for records
 
             # Get the sub-orders for the order based on the order ID
-            sub_orders = SubOrder.query.filter_by(order_id=order.id).all()
+            #sub_orders = SubOrder.query.filter_by(order_id=order.id).all()
 
             # From the sub-orders, get the ordered ingredients for the order and delete them
-            for sub_order in sub_orders:
-                OrderedIngredient.query.filter_by(sub_order_id=sub_order.id).delete()
+            #for sub_order in sub_orders:
+                #OrderedIngredient.query.filter_by(sub_order_id=sub_order.id).delete()
 
-            SubOrder.query.filter_by(order_id=order.id).delete() # Delete the sub-orders for the order
-            Delivery.query.filter_by(order_id=order.id).delete() # Delete the deliveries for the order
-            db.session.delete(order) # Delete the order
-            db.session.commit() # Commit the changes to the database
+            #SubOrder.query.filter_by(order_id=order.id).delete() # Delete the sub-orders for the order
+            #Delivery.query.filter_by(order_id=order.id).delete() # Delete the deliveries for the order
+            #db.session.delete(order) # Delete the order
+            #db.session.commit() # Commit the changes to the database
             return jsonify({'message': 'Order has been removed successfully'}), 200
 
         return jsonify({'error': 'Order cannot be cancelled'}), 400

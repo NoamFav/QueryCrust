@@ -21,6 +21,13 @@ def get_all_orders():
 
     # Go through each order and get the details 
     for order in orders:
+
+        if order.status == 'Cancelled':
+            continue
+
+        if order.status == 'Delivered':
+            continue
+
         customer = order.customer
         
         # Get the list of drivers who delivered the order
@@ -33,6 +40,40 @@ def get_all_orders():
             'customer_id': order.customer_id,
             'customer_name': customer.name,
             'customer_address': order.address,
+            'total_cost': order.total_cost,
+            'status': order.status,
+            'ordered_at': order.ordered_at.strftime('%Y-%m-%d %H:%M:%S'), # Convert datetime to string in format 'YYYY-MM-DD HH:MM:SS'
+            'driver_ids': driver_ids,
+            'items': get_item_from_order(order),
+        }
+        order_list.append(order_info)
+
+    return jsonify(order_list)
+
+@admin_bp.route('/records', methods=['GET'])
+def get_all_records():
+    orders = CustomerOrders.query.all()
+    order_list = []
+
+    # Go through each order and get the details 
+    for order in orders:
+
+        customer = order.customer
+        
+        # Get the list of drivers who delivered the order
+        deliveries = Delivery.query.filter_by(order_id=order.id).all()
+        driver_ids = [delivery.delivered_by for delivery in deliveries]
+
+        # Put everything together in a dictionary
+        order_info = {
+            'order_id': order.id,
+            'customer_id': order.customer_id,
+            'customer_name': customer.name,
+            'customer_address': order.address,
+            'customer_gender': customer.gender,
+            'customer_age': customer.age,
+            'customer_order_count': customer.previous_orders,
+            'customer_last_order': customer.last_order.strftime('%Y-%m-%d %H:%M:%S') if customer.last_order else None,
             'total_cost': order.total_cost,
             'status': order.status,
             'ordered_at': order.ordered_at.strftime('%Y-%m-%d %H:%M:%S'), # Convert datetime to string in format 'YYYY-MM-DD HH:MM:SS'

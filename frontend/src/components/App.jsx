@@ -13,6 +13,7 @@ import PizzaCustomization from './PizzaCustomization';
 import Checkout from './Checkout';
 import Order from './Order';
 import Admin from './AdminTab';
+import AdminRecords from './AdminRecords';
 import PersonalDetails from './PersonalInfo';
 
 function App() {
@@ -67,6 +68,10 @@ function App() {
 
               <Route path="/admin" element={
                   isAuthenticated && isAdmin ? <Admin /> : <Navigate to="/" />
+              } />
+
+              <Route path="/admin/records" element={
+                  isAuthenticated && isAdmin ? <AdminRecords /> : <Navigate to="/" />
               } />
 
               {/* Catch-all Route */}

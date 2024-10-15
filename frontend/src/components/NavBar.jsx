@@ -46,7 +46,7 @@ const Navbar = ({isAdmin}) => {
             )}
           </Link>
               {isAdmin && (
-              <div className="relative"> {/* Wrap Admin link in a relative div */}
+              <div className="relative">
                 <Link to="/admin" className="text-white hover:text-gray-300 transition duration-200">
                   Admin
                   {adminOrders.length > 0 && (
@@ -56,6 +56,11 @@ const Navbar = ({isAdmin}) => {
                   )}
                 </Link>
               </div>
+              )}
+            {isAdmin && (
+              <Link to="/admin/records" className="text-white hover:text-gray-300 transition duration-200">
+                  Records
+              </Link>
             )}
         </div>
       </div>
