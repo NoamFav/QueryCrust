@@ -2,7 +2,7 @@ from flask import Flask, session
 from config import Config
 from flask_cors import CORS
 from models import db, migrate
-from flask_session import Session  # Add this import
+from flask_session import Session
 
 import logging
 import multiprocessing

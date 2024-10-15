@@ -513,25 +513,25 @@ with app.app_context():
     session.commit()
 
     discount = [
-        {'name': 'PIE', 'value': 0.314},  # Play on Pi (31.4% discount)
-        {'name': 'HALF', 'value': 0.5},   # 50% discount
-        {'name': 'TEN', 'value': 0.1},    # 10% discount
-        {'name': 'FIFTEEN', 'value': 0.15},  # 15% discount
-        {'name': 'TWENTY', 'value': 0.2},  # 20% discount
-        {'name': 'THIRTY', 'value': 0.3},  # 30% discount
-        {'name': 'FORTY', 'value': 0.4},  # 40% discount
-        {'name': 'FIFTY', 'value': 0.5},  # 50% discount
-        {'name': 'SIXTY', 'value': 0.6},  # 60% discount
-        {'name': 'SEVENTY', 'value': 0.7},  # 70% discount
-        {'name': 'EIGHTY', 'value': 0.8},  # 80% discount
-        {'name': 'NINETY', 'value': 0.9},  # 90% discount
-        {'name': 'HUNDRED', 'value': 1},  # 100% discount
-        {'name': 'G_FORCE', 'value': 0.098},  # 9.8% discount, derived from gravitational acceleration
-        {'name': 'LIGHTSPEED', 'value': 0.3},  # 30% discount, based on the speed of light approximation
-        {'name': 'BOLTZ', 'value': 0.138},  # 13.8% discount, inspired by the Boltzmann constant
-        {'name': 'PLANCK', 'value': 0.663},  # 66.3% discount, inspired by Planck's constant (scaled)
-        {'name': 'EULER', 'value': 0.2718},  # 27.18% discount, based on Euler's number
-        {'name': 'QUANTUM', 'value': 0.42}  # 42% discount, a fun nod to the "answer to life, the universe, and everything"
+        {'name': 'PIE', 'value': 0.314},  
+        {'name': 'HALF', 'value': 0.5},
+        {'name': 'TEN', 'value': 0.1},
+        {'name': 'FIFTEEN', 'value': 0.15},
+        {'name': 'TWENTY', 'value': 0.2},
+        {'name': 'THIRTY', 'value': 0.3},
+        {'name': 'FORTY', 'value': 0.4},
+        {'name': 'FIFTY', 'value': 0.5},
+        {'name': 'SIXTY', 'value': 0.6},
+        {'name': 'SEVENTY', 'value': 0.7},
+        {'name': 'EIGHTY', 'value': 0.8},
+        {'name': 'NINETY', 'value': 0.9},
+        {'name': 'HUNDRED', 'value': 1},
+        {'name': 'G_FORCE', 'value': 0.098},
+        {'name': 'LIGHTSPEED', 'value': 0.3},
+        {'name': 'BOLTZ', 'value': 0.138},
+        {'name': 'PLANCK', 'value': 0.663},
+        {'name': 'EULER', 'value': 0.2718},
+        {'name': 'QUANTUM', 'value': 0.42}
     ]
 
     for discount_data in discount:
