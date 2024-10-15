@@ -1,9 +1,8 @@
 // src/components/Register.jsx
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
+import { Link, useNavigate } from 'react-router-dom'; 
 
 const Register = () => {
-    // Define state variables with setters
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -11,15 +10,14 @@ const Register = () => {
     const [birthday, setBirthday] = useState('');
     const [phone_number, setPhone_number] = useState('');
     const [gender, setGender] = useState('');
-    const [error, setError] = useState(null); // For handling error messages
-    const [success, setSuccess] = useState(null); // For handling success messages
+    const [error, setError] = useState(null);
+    const [success, setSuccess] = useState(null);
 
-    const navigate = useNavigate(); // Hook for navigation
+    const navigate = useNavigate();
 
     const handleSubmit = (e) => {
-        e.preventDefault(); // Prevent default form submission behavior
+        e.preventDefault();
 
-        // Calculate age
         const currentYear = new Date().getFullYear();
         const birthYear = new Date(birthday).getFullYear();
         const age = currentYear - birthYear;
@@ -36,19 +34,16 @@ const Register = () => {
             age 
         };
 
-        // Determine the correct endpoint based on backend route
-        // Assuming backend route is '/api/customer/signin'
         fetch('http://localhost:5001/api/customer/signin', {
             method: 'POST',
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(payload) // Send all necessary data within the body
+            body: JSON.stringify(payload)
         })
             .then(response => {
                 if (!response.ok) {
-                    // Handle HTTP errors
                     return response.json().then(err => { throw err; });
                 }
                 setTimeout(() => history.push('/'), 2000);
@@ -57,9 +52,7 @@ const Register = () => {
             .then(data => {
                 console.log(data.message);
                 console.log(data);
-                setSuccess(data.message); // Set success message
-                // Optionally, redirect to login or another page after successful registration
-                // navigate('/login');
+                setSuccess(data.message);
             })
             .catch(error => {
                 console.error('Error registering:', error);

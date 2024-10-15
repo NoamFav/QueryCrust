@@ -5,7 +5,6 @@ import MenuItem from './MenuItem';
 const ExtrasTab = ({isAdmin}) => {
   const [extraItems, setExtraItems] = useState([]);
 
-  // Function to fetch extra items
   const fetchExtraItems = () => {
     fetch('http://localhost:5001/api/customer/menu?category=extra', {
       credentials: 'include',
@@ -19,7 +18,7 @@ const ExtrasTab = ({isAdmin}) => {
   };
 
   useEffect(() => {
-    fetchExtraItems();  // Fetch drink items on component mount
+    fetchExtraItems();
   }, []);
 
   return (

@@ -3,13 +3,11 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 
 export const OrderContext = createContext();
 
-// Custom hook for accessing order context
 export const useOrder = () => useContext(OrderContext);
 
 export const OrderProvider = ({ children, isAuthenticated }) => {
     const [orders, setOrders] = useState([]);
     
-    // Function to fetch orders from backend
     const fetchOrders = () => {
         if (!isAuthenticated) return;
         fetch('http://localhost:5001/api/customer/orders', {
@@ -21,7 +19,7 @@ export const OrderProvider = ({ children, isAuthenticated }) => {
         })
         .then((response) => response.json())
         .then((data) => {
-            setOrders(data); // Set orders after fetching
+            setOrders(data);
             console.log('Orders fetched:', data);
         })
         .catch((err) => {
@@ -49,7 +47,7 @@ export const OrderProvider = ({ children, isAuthenticated }) => {
         })
         .then(() => {
             setOrders((prevOrders) => prevOrders.filter((order) => order.id !== orderId));
-            fetchOrders(); // Re-fetch orders after removing
+            fetchOrders();
             console.log('Order removed:', orderId);
         })
         .catch((err) => {
@@ -57,12 +55,11 @@ export const OrderProvider = ({ children, isAuthenticated }) => {
         });
     };
     
-    // Fetch orders when authenticated
     useEffect(() => {
         if (isAuthenticated) {
-        fetchOrders(); // Fetch the orders when authenticated
+        fetchOrders();
         } else {
-        setOrders([]); // Clear the orders when not authenticated
+        setOrders([]);
         }
     }, [isAuthenticated]);
     

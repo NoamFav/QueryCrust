@@ -5,7 +5,6 @@ import MenuItem from './MenuItem';
 const DessertsTab = ({isAdmin}) => {
   const [dessertItems, setDessertItems] = useState([]);
 
-  // Function to fetch dessert items
   const fetchDessertItems = () => {
     fetch('http://localhost:5001/api/customer/menu?category=dessert', {
       credentials: 'include',
@@ -19,7 +18,7 @@ const DessertsTab = ({isAdmin}) => {
   };
 
   useEffect(() => {
-    fetchDessertItems();  // Fetch drink items on component mount
+    fetchDessertItems();
   }, []);
 
   return (

@@ -3,13 +3,11 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 
 export const CartContext = createContext();
 
-// Custom hook for accessing cart context
 export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children, isAuthenticated }) => {
   const [cartItems, setCartItems] = useState([]);
 
-  // Function to fetch cart items from backend
   const fetchCartItems = () => {
     fetch('http://localhost:5001/api/customer/cart', {
       method: 'GET',
@@ -20,7 +18,7 @@ export const CartProvider = ({ children, isAuthenticated }) => {
     })
       .then((response) => response.json())
       .then((data) => {
-        setCartItems(data); // Set cart items after fetching
+        setCartItems(data);
         console.log('Cart fetched:', data);
       })
       .catch((err) => {
@@ -28,12 +26,11 @@ export const CartProvider = ({ children, isAuthenticated }) => {
       });
   };
 
-  // Fetch cart items when authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      fetchCartItems(); // Fetch the cart when authenticated
+      fetchCartItems();
     } else {
-      setCartItems([]); // Clear the cart when not authenticated
+      setCartItems([]);
     }
   }, [isAuthenticated]);
 
@@ -59,7 +56,7 @@ export const CartProvider = ({ children, isAuthenticated }) => {
         return response.json();
       })
       .then(() => {
-        fetchCartItems(); // Refresh cart after adding an item
+        fetchCartItems();
       })
       .catch((error) => {
         console.error('Error adding to cart:', error);
@@ -86,7 +83,7 @@ export const CartProvider = ({ children, isAuthenticated }) => {
         return response.json();
       })
       .then(() => {
-        fetchCartItems(); // Refresh cart after removing an item
+        fetchCartItems();
       })
       .catch((error) => {
         console.error('Error removing from cart:', error);

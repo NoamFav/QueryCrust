@@ -4,7 +4,6 @@ import MenuItem from './MenuItem';
 const PizzaTab = ({isAdmin}) => {
   const [pizzaItems, setPizzaItems] = useState([]);
 
-  // Function to fetch pizza items
   const fetchMenuItems = () => {
     fetch('http://localhost:5001/api/customer/menu?category=pizza', {
       credentials: 'include',
@@ -18,7 +17,7 @@ const PizzaTab = ({isAdmin}) => {
   };
 
   useEffect(() => {
-    fetchMenuItems();  // Fetch pizza items on component mount
+    fetchMenuItems();
   }, []);
 
   return (

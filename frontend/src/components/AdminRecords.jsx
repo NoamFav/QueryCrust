@@ -1,3 +1,4 @@
+// src/components/AdminRecords.jsx
 import React, { useEffect, useState } from 'react';
 import { Bar, Line, Pie, Doughnut } from 'react-chartjs-2';
 import {
@@ -29,14 +30,14 @@ const AdminRecords = () => {
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    // Fetch all records from the API using fetch
-    fetch('http://localhost:5001/api/admin/records')
+    fetch('http://localhost:5001/api/admin/records', {
+        credentials: 'include',
+    })
       .then(response => response.json())
       .then(data => setOrders(data))
       .catch(error => console.log(error));
   }, []);
 
-  // Helper functions to extract data for charts
   const getTotalCostData = () => {
     return orders.map(order => order.total_cost);
   };
@@ -45,12 +46,11 @@ const AdminRecords = () => {
     const parsedDate = new Date(dateString);
     const year = parsedDate.getFullYear();
     const month = String(parsedDate.getMonth() + 1).padStart(2, '0'); 
-    return `${year}-${month}`; // YYYY-MM format
+    return `${year}-${month}`; 
   };
 
   const getOrderDates = () => orders.map(order => parseDate(order.ordered_at));
 
-  // Monthly report: Group by year-month (YYYY-MM)
   const getMonthlyData = () => {
     const monthlyTotals = {};
     orders.forEach(order => {
@@ -63,7 +63,6 @@ const AdminRecords = () => {
     return monthlyTotals;
   };
 
-  // Annual report: Group by year (YYYY)
   const getAnnualData = () => {
     const annualTotals = {};
     orders.forEach(order => {
@@ -76,7 +75,6 @@ const AdminRecords = () => {
     return annualTotals;
   };
 
-  // Total cost per customer
   const getTotalCostPerCustomer = () => {
     const customerTotals = {};
     orders.forEach(order => {
@@ -102,7 +100,6 @@ const AdminRecords = () => {
     }));
   };
 
-    // Gender-based data
   const getGenderData = () => {
     const genderCount = { Male: 0, Female: 0, Other: 0 };
     orders.forEach(order => {
@@ -111,7 +108,6 @@ const AdminRecords = () => {
     return genderCount;
   };
 
-  // Age-based data
   const getAgeData = () => {
     const ageGroups = { '18-25': 0, '26-35': 0, '36-45': 0, '46+': 0 };
     orders.forEach(order => {
@@ -124,7 +120,6 @@ const AdminRecords = () => {
     return ageGroups;
   };
 
-  // Location-based data (Assuming 'customer_address' contains location data like city names)
   const getLocationData = () => {
     const locationMap = {};
     orders.forEach(order => {
@@ -134,7 +129,6 @@ const AdminRecords = () => {
     return locationMap;
   };
 
-  // Most used items data
   const getMostUsedItems = () => {
     const itemMap = {};
     orders.forEach(order => {
@@ -145,7 +139,6 @@ const AdminRecords = () => {
     return itemMap;
   };
 
-  // Most used ingredients data
   const getMostUsedIngredients = () => {
     const ingredientMap = {};
     orders.forEach(order => {
@@ -158,7 +151,6 @@ const AdminRecords = () => {
     return ingredientMap;
   };
 
-  // Prepare data for the charts
   const barData = {
     labels: getOrderDates(),
     datasets: [
@@ -182,35 +174,33 @@ const AdminRecords = () => {
   };
 
   const monthlyReport = {
-    labels: Object.keys(getMonthlyData()), // Months (YYYY-MM)
+    labels: Object.keys(getMonthlyData()),
     datasets: [
       {
         label: 'Monthly Total Cost',
-        data: Object.values(getMonthlyData()), // Total cost for each month
+        data: Object.values(getMonthlyData()),
         backgroundColor: 'rgba(75, 192, 192, 0.6)',
       },
     ],
   };
 
-  // Annual Report
   const annualReport = {
-    labels: Object.keys(getAnnualData()), // Years (YYYY)
+    labels: Object.keys(getAnnualData()),
     datasets: [
       {
         label: 'Annual Total Cost',
-        data: Object.values(getAnnualData()), // Total cost for each year
+        data: Object.values(getAnnualData()),
         backgroundColor: 'rgba(153, 102, 255, 0.6)',
       },
     ],
   };
 
-  // Total Cost per Customer
   const totalCostPerCustomer = {
-    labels: Object.keys(getTotalCostPerCustomer()), // Customer IDs
+    labels: Object.keys(getTotalCostPerCustomer()),
     datasets: [
       {
         label: 'Total Cost per Customer',
-        data: Object.values(getTotalCostPerCustomer()), // Total cost for each customer
+        data: Object.values(getTotalCostPerCustomer()),
         backgroundColor: 'rgba(255, 159, 64, 0.6)',
       },
     ],
@@ -278,22 +268,22 @@ const AdminRecords = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         <div className="bg-white shadow-lg rounded-lg p-4">
-          <h2 className="text-2xl font-bold mb-2">Monthly Total Cost</h2>
+          <h2 className="text-2xl font-bold mb-2">Monthly Earnings</h2>
           <Bar data={monthlyReport} />
         </div>
 
         <div className="bg-white shadow-lg rounded-lg p-4">
-          <h2 className="text-2xl font-bold mb-2">Annual Total Cost</h2>
+          <h2 className="text-2xl font-bold mb-2">Annual Earnings</h2>
           <Bar data={annualReport} />
         </div>
 
         <div className="bg-white shadow-lg rounded-lg p-4">
-          <h2 className="text-2xl font-bold mb-2">Total Cost per Customer</h2>
+          <h2 className="text-2xl font-bold mb-2">Total Earnings per Customer</h2>
           <Bar data={totalCostPerCustomer} />
         </div>
         
         <div className="bg-white shadow-lg rounded-lg p-4">
-          <h2 className="text-2xl font-bold mb-2">Total Cost of Orders</h2>
+          <h2 className="text-2xl font-bold mb-2">Total Earnings of Orders</h2>
           <Bar data={barData} />
         </div>
 

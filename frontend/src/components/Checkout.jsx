@@ -5,15 +5,15 @@ import { OrderContext } from '../context/OrderContext';
 import { useNavigate } from 'react-router-dom';
 
 const Checkout = () => {
-  const { cartItems, fetchCartItems } = useContext(CartContext); // Access the cart context
-  const { fetchOrders } = useContext(OrderContext); // Access the order context
+  const { cartItems, fetchCartItems } = useContext(CartContext);
+  const { fetchOrders } = useContext(OrderContext);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderDetails, setOrderDetails] = useState(null);
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [discountCode, setDiscountCode] = useState('');
   const [discountValue, setDiscountValue] = useState(0);
   const [totalCost, setTotalCost] = useState(cartItems.reduce((acc, item) => acc + item.total_price, 0));
-  const [originalCost, setOriginalCost] = useState(totalCost); // Original cost before applying discount
+  const [originalCost, setOriginalCost] = useState(totalCost);
   const [appliedDiscount, setAppliedDiscount] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ const Checkout = () => {
       },
     })
       .then((response) => response.json())
-      .then((data) => setDeliveryAddress(data.address)) // Pre-fill address from user details
+      .then((data) => setDeliveryAddress(data.address)) 
       .catch((err) => setError('Failed to fetch user details.'));
   }, []);
 
@@ -37,8 +37,8 @@ const Checkout = () => {
     }
 
     if(!appliedDiscount) {
-        setDiscountValue(0); // Set discount value to 0 if no discount applied
-        setDiscountCode(''); // Clear discount code
+        setDiscountValue(0);
+        setDiscountCode('');
     }
 
     fetch('http://localhost:5001/api/customer/order', {
@@ -47,17 +47,17 @@ const Checkout = () => {
       headers: {
         'Content-Type': 'application/json',
       },
-        body: JSON.stringify({ address: deliveryAddress, discountValue: discountValue, discountName: discountCode }), // Pass the address to the backend
+        body: JSON.stringify({ address: deliveryAddress, discountValue: discountValue, discountName: discountCode }),
     })
       .then((response) => response.json())
       .then((data) => {
         if (data.error) {
           console.error('Error placing order:', data.error);
         } else {
-          setOrderDetails(data); // Store order details
-          setOrderPlaced(true); // Mark order as placed
-          fetchCartItems(); // Re-fetch the cart after the order
-          fetchOrders(); // Re-fetch orders after the order
+          setOrderDetails(data);
+          setOrderPlaced(true);
+          fetchCartItems(); 
+          fetchOrders();
         }
       })
       .catch((err) => console.error('Error during checkout:', err));
@@ -69,7 +69,6 @@ const Checkout = () => {
       return;
     }
 
-    // Prevent applying more than one discount
     if (appliedDiscount) {
       setError('A discount code has already been applied. Please remove it before applying a new one.');
       return;
@@ -80,20 +79,20 @@ const Checkout = () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ discount_code: discountCode }), // Send discount code to the backend
+      body: JSON.stringify({ discount_code: discountCode }),
     })
       .then((response) => response.json())
       .then((data) => {
         if (data.error) {
-          setError(data.error); // Show error message if the discount code is invalid
-          setDiscountCode(''); // Reset discount code if invalid
+          setError(data.error);
+          setDiscountCode('');
         } else {
-          setError(''); // Clear error
-          setAppliedDiscount(true); // Mark that a discount is applied
-          setOriginalCost(totalCost); // Store original cost before applying discount
-          setTotalCost((prevTotal) => prevTotal * (1 - data.discount_value)); // Apply discount and update total cost
-          setDiscountValue(data.discount_value); // Store the discount value
-          setDiscountCode(data.discount_name); // Store the discount code
+          setError('');
+          setAppliedDiscount(true);
+          setOriginalCost(totalCost);
+          setTotalCost((prevTotal) => prevTotal * (1 - data.discount_value));
+          setDiscountValue(data.discount_value);
+          setDiscountCode(data.discount_name);
         }
       })
       .catch((err) => {
@@ -102,12 +101,11 @@ const Checkout = () => {
       });
   };
 
-  // Function to remove the discount
   const removeDiscount = () => {
-    setAppliedDiscount(false); // Reset discount state
-    setTotalCost(originalCost); // Revert to original cost
-    setDiscountCode(''); // Clear discount code
-    setError(''); // Clear any error messages
+    setAppliedDiscount(false);
+    setTotalCost(originalCost);
+    setDiscountCode('');
+    setError('');
   };
   if (orderPlaced) {
     return (
@@ -174,7 +172,7 @@ const Checkout = () => {
                 type="text"
                 className="w-full px-4 py-2 border rounded-lg text-gray-700"
                 value={deliveryAddress}
-                onChange={(e) => setDeliveryAddress(e.target.value)} // Update the address
+                onChange={(e) => setDeliveryAddress(e.target.value)}
               />
               {error && <p className="text-red-500 mt-2">{error}</p>}
             </div>
@@ -187,18 +185,18 @@ const Checkout = () => {
                 placeholder="Enter promo code"
                 value={discountCode}
                 disabled={appliedDiscount}
-                onChange={(e) => setDiscountCode(e.target.value)} // Handle promo code input
+                onChange={(e) => setDiscountCode(e.target.value)} 
               />
               <button
-                onClick={applyDiscount} // Apply the discount code
+                onClick={applyDiscount}
                 className="mt-2 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200"
-                disabled={appliedDiscount} // Disable if discount is already applied
+                disabled={appliedDiscount}
               >
                 Apply Promo Code
               </button>
               {appliedDiscount && (
                 <button
-                  onClick={removeDiscount} // Remove the discount
+                  onClick={removeDiscount}
                   className="mt-2 ml-2 bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition duration-200"
                 >
                   Remove Promo Code

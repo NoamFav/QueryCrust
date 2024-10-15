@@ -27,15 +27,14 @@ const MenuItem = ({ item, category, fetchMenuItems, isAdmin }) => {
         .then(response => {
           if (!response.ok) {
             return response.json().then(data => {
-              // Use the detailed error message returned from the backend
               throw new Error(data.error);
             });
           }
-          fetchMenuItems();  // Re-fetch the updated menu after deletion
+          fetchMenuItems();
         })
         .catch(error => {
           console.error('Failed to remove menu item:', error.message);
-          alert(`Error: ${error.message}`);  // Display a clear error message to the user
+          alert(`Error: ${error.message}`);
         });
     };
 

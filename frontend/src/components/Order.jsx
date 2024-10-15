@@ -6,24 +6,22 @@ const Order = () => {
     const { orders, removeOrder} = useOrder();
     const [updatedOrders, setUpdatedOrders] = useState([]);
 
-    // Function to determine if the order can be cancelled
     const canCancelOrder = (order) => {
         if (order.status === 'Pending') {
             const now = new Date();
             const orderedAt = new Date(order.ordered_at);
-            const timeDiff = (now - orderedAt) / 1000; // Time difference in seconds
-            return timeDiff < 300;  // 5 minutes = 300 seconds
+            const timeDiff = (now - orderedAt) / 1000;
+            return timeDiff < 300;
         }
         return false;
     };
 
-    // Update `updatedOrders` immediately after `orders` is fetched
     useEffect(() => {
         const newOrders = orders.map((order) => ({
             ...order,
             canCancel: canCancelOrder(order),
         }));
-        setUpdatedOrders(newOrders);  // Set orders immediately after they are fetched
+        setUpdatedOrders(newOrders);
     }, [orders]);
 
     useEffect(() => {
@@ -33,9 +31,9 @@ const Order = () => {
                 canCancel: canCancelOrder(order),
             }));
             setUpdatedOrders(newOrders);
-        }, 10000);  // Update every 10 seconds
+        }, 10000);
 
-        return () => clearInterval(interval);  // Clear interval on component unmount
+        return () => clearInterval(interval);
     }, [orders]);
 
     return (
@@ -62,7 +60,6 @@ const Order = () => {
                                         <p className="text-gray-600">Address: {order.address}</p>
                                         <p className="text-gray-600">ETA: {order.delivery_eta ? new Date(order.delivery_eta).toLocaleString() : 'N/A'}</p>
 
-                                        {/* Display multiple drivers */}
                                         <p className="text-gray-600">Drivers: {order.delivery_drivers.join(', ') || 'N/A'}</p>
 
                                         <p className="text-gray-600">Status: {order.status}</p>

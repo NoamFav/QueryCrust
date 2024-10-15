@@ -1,17 +1,16 @@
 // src/components/Cart.jsx
 import React from 'react';
-import { useCart } from '../context/CartContext'; // Import the useCart hook
-import { Link , useNavigate} from 'react-router-dom'; // For navigation
+import { useCart } from '../context/CartContext';
+import { Link , useNavigate} from 'react-router-dom';
 
 const Cart = () => {
-  const { cartItems, removeFromCart } = useCart(); // Destructure cartItems and removeFromCart from context
-  const navigate = useNavigate(); // Initialize the navigate hook
+  const { cartItems, removeFromCart } = useCart();
+  const navigate = useNavigate();
 
-  // Calculate total price
   const totalPrice = cartItems.reduce((acc, item) => acc + item.total_price, 0);
 
   const handleProceedToCheckout = () => {
-    navigate('/checkout'); // Navigate to the checkout page
+    navigate('/checkout');
   };
 
   return (

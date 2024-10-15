@@ -4,23 +4,22 @@ import { useAdminOrder } from '../context/AdminOrderContext';
 import { useEffect } from 'react';
 
 const AdminTab = () => {
-    const {adminOrders, fetchAdminOrders, updateOrderStatus} = useAdminOrder(); // Use the custom hook
+    const {adminOrders, fetchAdminOrders, updateOrderStatus} = useAdminOrder();
 
     useEffect(() => {
         fetchAdminOrders(); 
     }, []);
 
-    // Set up an interval to fetch orders every minute
     useEffect(() => {
         const interval = setInterval(() => {
-            fetchAdminOrders(); // Fetch orders every minute
+            fetchAdminOrders();
         }, 60000);
 
         return () => clearInterval(interval);
     }, []);
 
     const handleStatusUpdate = (orderId, newStatus) => {
-        updateOrderStatus(orderId, newStatus); // Call the API to update the status
+        updateOrderStatus(orderId, newStatus);
     };
 
     return (
@@ -46,7 +45,6 @@ const AdminTab = () => {
                             <p className="text-gray-500">Status: {order.status}</p>
                             <p className="text-gray-500">Ordered At: {new Date(order.ordered_at).toLocaleString()}</p>
 
-                            {/* Display multiple drivers */}
                             <p className="text-gray-500">Driver IDs: {order.driver_ids.length > 0 ? order.driver_ids.join(', ') : 'N/A'}</p>
 
                             <p className="text-gray-500">Customer: {order.customer_name}</p>
@@ -76,7 +74,6 @@ const AdminTab = () => {
                                 ))}
                             </ul>
 
-                            {/* Status update buttons */}
                             <div className="mt-4 flex space-x-2">
                                 <button 
                                     className="bg-yellow-500 text-white py-2 px-4 rounded hover:bg-yellow-600"

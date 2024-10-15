@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
 const PersonalDetails = () => {
-  const [userDetails, setUserDetails] = useState(null); // To store user details
-  const [loading, setLoading] = useState(true); // Loading state
-  const [error, setError] = useState(null); // Error state
+  const [userDetails, setUserDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Fetch the customer data on component mount
   useEffect(() => {
     fetch('http://localhost:5001/api/customer/details', {
       credentials: 'include',
@@ -20,11 +19,11 @@ const PersonalDetails = () => {
         return response.json();
       })
       .then(data => {
-        setUserDetails(data); // Store user details in state
-        setLoading(false); // Stop loading
+        setUserDetails(data);
+        setLoading(false);
       })
       .catch(error => {
-        setError(error.message); // Store error if any
+        setError(error.message);
         setLoading(false);
       });
   }, []);

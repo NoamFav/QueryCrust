@@ -12,7 +12,6 @@ const PizzaCustomization = () => {
   const { addToCart } = useCart();
 
   useEffect(() => {
-    // Fetch the pizza item
     fetch(`http://localhost:5001/api/customer/menu/${id}`, {
         credentials: 'include',
         headers: {
@@ -23,7 +22,6 @@ const PizzaCustomization = () => {
       .then(data => setPizzaItem(data))
       .catch(error => console.error('Error fetching pizza item:', error));
 
-    // Fetch available ingredients
     fetch('http://localhost:5001/api/customer/ingredients', {
         credentials: 'include',
         headers: {
@@ -49,7 +47,7 @@ const PizzaCustomization = () => {
     addToCart(pizzaItem.id, 1, selectedIngredients.map(ingredientId => ({
       ingredient_id: ingredientId,
       name: ingredients.find(ingredient => ingredient.id === ingredientId).name,
-      action: 'add', // or 'remove' based on your logic
+      action: 'add',
       price: ingredients.find(ingredient => ingredient.id === ingredientId).price
     })));
   };

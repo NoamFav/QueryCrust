@@ -9,7 +9,7 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
     const [error, setError] = useState(null);
 
     const handleSubmit = (e) => {
-        e.preventDefault(); // Prevent default form submission behavior
+        e.preventDefault();
 
         fetch('http://localhost:5001/api/customer/login', {
             method: 'POST',
@@ -21,16 +21,14 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
         })
         .then(response => {
             if (!response.ok) {
-                // Handle HTTP errors
                 return response.json().then(err => { throw err; });
             }
             return response.json();
         })
         .then(data => {
-            setIsAuthenticated(true); // Set the user as authenticated
-            setIsAdmin(data.is_admin); // Set the user as an admin
+            setIsAuthenticated(true);
+            setIsAdmin(data.is_admin);
             console.log(data.message + ' ' + data.is_admin);
-            // TODO: Handle successful login (e.g., store user data, redirect)
         })
         .catch(error => {
             console.error('Error logging in:', error);
