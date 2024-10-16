@@ -7,7 +7,7 @@ const Cart = () => {
   const { cartItems, removeFromCart } = useCart();
   const navigate = useNavigate();
 
-  const totalPrice = cartItems.reduce((acc, item) => acc + item.total_price, 0);
+  const totalPrice = cartItems.reduce((acc, item) => acc + item.total_price, 0) * 1.40 * 1.09;
 
   const handleProceedToCheckout = () => {
     navigate('/checkout');

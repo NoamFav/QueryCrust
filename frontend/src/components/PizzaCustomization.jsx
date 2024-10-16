@@ -72,6 +72,8 @@ const PizzaCustomization = () => {
                 className="mr-3 accent-green-500"
               />
               <span>{ingredient.name} (+${ingredient.price.toFixed(2)})</span>
+              <span>{ingredient.is_vegetarian ? ' 🌱' : ''}</span>
+              <span>{ingredient.is_vegan ? ' 🥗' : ''}</span>
             </label>
           ))}
         </div>

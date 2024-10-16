@@ -12,7 +12,7 @@ const Checkout = () => {
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [discountCode, setDiscountCode] = useState('');
   const [discountValue, setDiscountValue] = useState(0);
-  const [totalCost, setTotalCost] = useState(cartItems.reduce((acc, item) => acc + item.total_price, 0));
+  const [totalCost, setTotalCost] = useState(cartItems.reduce((acc, item) => acc + item.total_price, 0) * 1.40 * 1.09);
   const [originalCost, setOriginalCost] = useState(totalCost);
   const [appliedDiscount, setAppliedDiscount] = useState(false);
   const [error, setError] = useState('');

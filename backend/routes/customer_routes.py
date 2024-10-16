@@ -1,6 +1,6 @@
 # routes/customer_routes.py
 from flask import Blueprint, jsonify, request, session
-from models.database import Menu, CustomerOrders, CustomerPersonalInformation, SubOrder, Ingredient, OrderedIngredient, Cart, CartItem, DeliveryDriver, Delivery, Discounts
+from models.database import Menu, CustomerOrders, CustomerPersonalInformation, SubOrder, Ingredient, OrderedIngredient, Cart, CartItem, DeliveryDriver, Delivery, Discounts, PizzaIngredient
 from datetime import datetime
 from models import db
 import traceback
@@ -159,8 +159,20 @@ def get_menu():
     else:
         items = Menu.query.all() # Get all menu items
 
+    
+
     # Create a list of menu items to return
     menu = [{'id': item.id, 'name': item.name, 'price': item.price, 'category': item.category} for item in items]
+    for menu_item in menu:
+        if menu_item['category'] == 'pizza':
+            pizza_ingredients = PizzaIngredient.query.filter_by(menu_id=menu_item['id']).all()
+            menu_item['ingredients'] = [{'name': ingredient.ingredient.name} for ingredient in pizza_ingredients]
+
+            is_vegan = all(ingredient.ingredient.is_vegan for ingredient in pizza_ingredients)
+            is_vegetarian = all(ingredient.ingredient.is_vegetarian for ingredient in pizza_ingredients)
+            menu_item['is_vegan'] = is_vegan
+            menu_item['is_vegetarian'] = is_vegetarian
+
     return jsonify(menu)
 
 # Get a single menu item
@@ -182,7 +194,7 @@ def get_ingredients():
     ingredients = Ingredient.query.all()
 
     # Create a list of ingredients to return
-    ingredient_list = [{'id': ingr.id, 'name': ingr.name, 'price': ingr.price} for ingr in ingredients]
+    ingredient_list = [{'id': ingr.id, 'name': ingr.name, 'price': ingr.price, 'is_vegan': ingr.is_vegan, 'is_vegetarian': ingr.is_vegetarian} for ingr in ingredients]
     return jsonify(ingredient_list)
 
 # Reset pizza counts for all drivers with active orders
@@ -224,6 +236,13 @@ def apply_discount():
         'discount_value': discount.value
     }), 200
 
+def apply_margin_and_VAT(price):
+    # Apply a 40% margin to the price
+    price = price * 1.40
+    # Apply a 9% VAT to the price
+    price = price * 1.09
+    return price
+
 # Place an order
 @customer_bp.route('/order', methods=['POST'])
 def place_order():
@@ -249,6 +268,9 @@ def place_order():
         # Calculate the total cost of the order with the items in the cart times their quantities
         total_cost = sum(item.total_price * item.quantity for item in cart.items)
 
+        # Apply a 40% margin and 9% VAT to the total cost
+        total_cost = apply_margin_and_VAT(total_cost)
+
         discount_code = data.get('discountName') # Get the discount code from the request database
         if discount_code:
             discount = Discounts.query.filter_by(name=discount_code).first()
@@ -260,6 +282,23 @@ def place_order():
             total_cost = total_cost * (1 - discount) # Apply the discount to the total cost
             total_cost = round(total_cost, 2) # Round the total cost to 2 decimal places
 
+        # Update the customer information with the new order
+        customer_info = CustomerPersonalInformation.query.get(user_id)
+        assert customer_info, 'Customer not found'
+        customer_info.previous_orders += 1 # Increase the number of previous orders for the customer
+        customer_info.last_order = datetime.now() # Set the last order date and time to the current date and time
+
+        if customer_info.previous_orders % 10 == 0:
+            # If the customer has placed 10 orders, apply a 10% discount to the total cost (loyalty discount)
+            total_cost = total_cost * 0.90
+
+        if customer_info.birthday == datetime.now().date():
+            pizza = Menu.query.filter_by(category='pizza').first()
+            if pizza:
+                total_cost = total_cost - pizza.price # Give the customer a free pizza on their birthday
+
+        total_cost = round(total_cost, 2) # Round the total cost to 2 decimal places
+
         # Create a new order with the user's ID, total cost, and address
         new_order = CustomerOrders(
             customer_id=user_id,
@@ -269,12 +308,6 @@ def place_order():
             delivery_eta=datetime.now() + timedelta(minutes=30), # Set the delivery ETA to 30 minutes from now (for testing purposes)
             address=data.get('address') # Get the address from the request data not from the user's information (You may need to deliver to a different address)
         )
-
-        # Update the customer information with the new order
-        customer_info = CustomerPersonalInformation.query.get(user_id)
-        assert customer_info, 'Customer not found'
-        customer_info.previous_orders += 1 # Increase the number of previous orders for the customer
-        customer_info.last_order = datetime.now() # Set the last order date and time to the current date and time
 
         # Add the new order to the database
         db.session.add(new_order)
@@ -290,7 +323,7 @@ def place_order():
             driver = (
                 DeliveryDriver.query
                 .outerjoin(Delivery)
-                .filter(DeliveryDriver.delivery_area == new_order.address)
+                .filter(DeliveryDriver.delivery_area == new_order.address, or_(Delivery.assigned_at == None, Delivery.assigned_at < datetime.now() - timedelta(minutes=30))) # Get drivers with no deliveries or deliveries older than 30 minutes
                 .group_by(DeliveryDriver.id)
                 .having(func.count(Delivery.id) < 5)  # Max 5 orders per driver
                 .having(or_(func.sum(Delivery.pizza_count) + item_quantity <= 3, func.sum(Delivery.pizza_count).is_(None)))  # Ensure total pizza count doesn't exceed 3 or isn't None (cause apparently None isn't inferior to 3)

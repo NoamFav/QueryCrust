@@ -22,7 +22,6 @@ const Register = () => {
         const birthYear = new Date(birthday).getFullYear();
         const age = currentYear - birthYear;
 
-        // Prepare the payload
         const payload = { 
             name, 
             email, 

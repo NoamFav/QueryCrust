@@ -39,14 +39,11 @@ class CustomerPersonalInformation(db.Model):
 
 @event.listens_for(CustomerPersonalInformation, 'before_insert')
 def auto_increment_menu_id(mapper, connection, target):
-    # Use SQLAlchemy's select() to query for the max id in the Menu table
     stmt = select(func.max(CustomerPersonalInformation.id))
 
-    # Execute the select statement using the connection
     result = connection.execute(stmt)
     max_id = result.scalar()
 
-    # Assign the new ID by incrementing the max id
     target.id = (max_id + 1) if max_id else 1
 
 
@@ -168,7 +165,7 @@ class Menu(db.Model):
         # Add 9% VAT
         final_price = price_with_profit * 1.09
 
-        return round(float(final_price), 2)  # Ensuring the final_price is cast to float before rounding
+        return round(float(final_price), 2)
     
     def is_vegetarian(self, session):
         ingredients = session.query(Ingredient).join(PizzaIngredient).filter(PizzaIngredient.menu_id == self.id).all()

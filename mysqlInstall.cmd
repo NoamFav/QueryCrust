@@ -12,7 +12,5 @@ powershell -Command "Invoke-WebRequest -Uri 'https://dev.mysql.com/get/Downloads
 echo Running the MySQL installer...
 start /wait msiexec /i %MYSQL_INSTALLER% /qn
 
-:: Optionally, you can add commands to configure MySQL after installation
-
 echo MySQL has been installed.
 endlocal
