@@ -1,8 +1,19 @@
-*.log
-config/*
-!config/*.example
-.idea/
-
+# Node / JS
+node_modules/
 .DS_Store
-
+**/node_modules/
+dist/
+.build/
+.cache/
+.npm/
+.pnpm-store/
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+coverage/
+*.log
 .env
+.env.*
